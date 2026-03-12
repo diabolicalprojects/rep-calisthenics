@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Send, RefreshCw, TrendingDown, Users, DollarSign } from 'lucide-react';
-import { collection, getDocs, query, where, orderBy, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 import ModuleMetricBar from '../components/ModuleMetricBar';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from 'recharts';
@@ -31,24 +30,23 @@ const Retention = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const membersSnapshot = await getDocs(collection(db, 'members'));
-            const allMembers = membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const allMembers = await api.getMembers();
 
             const atRisk = allMembers.map(m => {
-                const score = calculateRiskScore(m, m.lastVisit);
+                const score = calculateRiskScore(m, m.last_visit);
                 return { ...m, riskScore: score };
             }).filter(m => m.riskScore > 50 || m.status === 'Inactivo');
 
             const totalMoneyAtRisk = atRisk.reduce((acc, curr) => {
                 const planPrice = curr.plan === 'Mensual' ? 50 : curr.plan === 'Elite' ? 100 : 500;
-                return acc + (curr.status === 'Activo' ? planPrice : 0);
+                return acc + (curr.status === 'active' || curr.status === 'Activo' ? planPrice : 0);
             }, 0);
 
             setAtRiskMembers(atRisk);
             setMetrics({
-                totalAtRisk: atRisk.filter(m => m.status === 'Activo').length,
+                totalAtRisk: atRisk.filter(m => m.status === 'active' || m.status === 'Activo').length,
                 moneyAtRisk: totalMoneyAtRisk,
-                reactivationPotential: atRisk.filter(m => m.status === 'Inactivo').length
+                reactivationPotential: atRisk.filter(m => m.status === 'Inactivo' || m.status === 'inactive').length
             });
         } catch (error) {
             console.error("Error fetching retention data:", error);

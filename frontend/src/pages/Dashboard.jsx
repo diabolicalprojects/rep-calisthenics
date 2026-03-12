@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, ArrowDownRight, Users, Clock, CreditCard, Activity, BarChart2 } from 'lucide-react';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import './Dashboard.css';
 import HelpTooltip from '../components/HelpTooltip';
 
@@ -22,9 +21,8 @@ const Dashboard = () => {
         const fetchData = async () => {
             try {
                 // Fetch Members
-                const membersSnapshot = await getDocs(collection(db, 'members'));
-                const membersData = membersSnapshot.docs.map(doc => doc.data());
-                const activeMembersCount = membersData.filter(m => m.status === 'Activo').length;
+                const membersData = await api.getMembers();
+                const activeMembersCount = membersData.filter(m => m.status === 'active' || m.status === 'Activo').length;
 
                 const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
                 // Simple risk/projection logic
@@ -35,10 +33,10 @@ const Dashboard = () => {
                 
                 membersData.forEach(m => {
                     const price = m.plan === 'Mensual' ? 50 : m.plan === 'Elite' ? 100 : 500;
-                    if (m.status === 'Activo') {
+                    if (m.status === 'active' || m.status === 'Activo') {
                         projected += price;
-                        if (m.lastVisit) {
-                            const lastVisit = new Date(m.lastVisit);
+                        if (m.last_visit) {
+                            const lastVisit = new Date(m.last_visit);
                             const diffDays = (new Date() - lastVisit) / (1000 * 60 * 60 * 24);
                             if (diffDays > 15) riskMoney += price;
                         } else {
@@ -46,38 +44,31 @@ const Dashboard = () => {
                         }
                     }
 
-                    if (m.createdAt) {
+                    if (m.created_at) {
                         try {
-                            const date = typeof m.createdAt.toDate === 'function' ? m.createdAt.toDate() : new Date(m.createdAt);
-                            if (date >= startOfMonth) {
-                                altasCount++;
-                            }
+                            const date = new Date(m.created_at);
+                            if (date >= startOfMonth) altasCount++;
                         } catch(e) {}
                     }
-                    if (m.status === 'Inactivo' && m.updatedAt) {
+                    if (m.status === 'Inactivo' && m.updated_at) {
                          try {
-                            const date = typeof m.updatedAt.toDate === 'function' ? m.updatedAt.toDate() : new Date(m.updatedAt);
-                            if (date >= startOfMonth) {
-                                bajasCount++;
-                            }
+                            const date = new Date(m.updated_at);
+                            if (date >= startOfMonth) bajasCount++;
                         } catch(e) {}
                     }
                 });
 
                 // Fetch recent POS transactions
                 let monthlyRevenue = 0;
-                let topProducts = { 'Agua': 5, 'Proteína': 3, 'Gatorade': 2 }; // Mock derived data
-                let hoursDistribution = { '08:00': 10, '18:00': 25, '20:00': 15 }; // Mock derived data
                 const recents = [];
 
                 try {
-                    const txSnap = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
-                    txSnap.docs.forEach((docSnap, idx) => {
-                        const data = docSnap.data();
-                        monthlyRevenue += data.totalAmount || 0;
-                        if (idx < 5) recents.push({ id: docSnap.id, ...data });
+                    const transactions = await api.getTransactions();
+                    transactions.forEach((tx, idx) => {
+                        monthlyRevenue += parseFloat(tx.total_amount) || 0;
+                        if (idx < 5) recents.push(tx);
                     });
-                } catch(e) { console.error("Transactions not found yet"); }
+                } catch(e) { console.error("Transactions error", e); }
 
                 setStats({
                     activeMembers: activeMembersCount,
@@ -88,8 +79,8 @@ const Dashboard = () => {
                     projectedRevenue: projected,
                     moneyAtRisk: riskMoney,
                     growthRate: `${(altasCount > bajasCount ? '+' : '')}${altasCount - bajasCount}`,
-                    topProducts,
-                    hoursDistribution
+                    topProducts: 'Agua, Proteína',
+                    hoursDistribution: '18:00 - 20:00'
                 });
 
                 setRecentPayments(recents);
@@ -235,7 +226,7 @@ const Dashboard = () => {
                                         </td>
                                         <td>
                                             <div><span className={`status-badge success`}>Completado</span></div>
-                                            <div style={{ marginTop: '5px', fontWeight: 'bold' }}>${payment.totalAmount}</div>
+                                            <div style={{ marginTop: '5px', fontWeight: 'bold' }}>${payment.total_amount}</div>
                                         </td>
                                     </tr>
                                 )) : (

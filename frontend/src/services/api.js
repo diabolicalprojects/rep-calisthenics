@@ -1,11 +1,19 @@
-const API_URL = '/api'; // In production with Nginx, this works. In dev, we need a proxy or full URL.
+const API_URL = '/api'; 
 
 const handleResponse = async (response) => {
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ error: 'Server Error' }));
     throw new Error(error.error || 'Server Error');
   }
   return response.json();
+};
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
 };
 
 export const api = {
@@ -17,41 +25,103 @@ export const api = {
   }).then(handleResponse),
 
   // MEMBERS
-  getMembers: () => fetch(`${API_URL}/members`).then(handleResponse),
-  createMember: (data) => fetch(`${API_URL}/members`, {
+  getMembers: () => fetch(`${API_URL}/members`, { headers: getAuthHeaders() }).then(handleResponse),
+  addMember: (data) => fetch(`${API_URL}/members`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
   updateMember: (id, data) => fetch(`${API_URL}/members/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteMember: (id) => fetch(`${API_URL}/members/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
   }).then(handleResponse),
 
   // INVENTORY
-  getInventory: () => fetch(`${API_URL}/inventory`).then(handleResponse),
+  getInventory: () => fetch(`${API_URL}/inventory`, { headers: getAuthHeaders() }).then(handleResponse),
+  addInventoryItem: (data) => fetch(`${API_URL}/inventory`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
   updateStock: (id, quantity) => fetch(`${API_URL}/inventory/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ quantity })
   }).then(handleResponse),
 
+  // APPOINTMENTS
+  getAppointments: (date) => fetch(`${API_URL}/appointments${date ? `?date=${date}` : ''}`, { headers: getAuthHeaders() }).then(handleResponse),
+  addAppointment: (data) => fetch(`${API_URL}/appointments`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updateAppointmentStatus: (id, status) => fetch(`${API_URL}/appointments/${id}/status`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status })
+  }).then(handleResponse),
+
+  // PAYMENTS (Accounting)
+  getPayments: () => fetch(`${API_URL}/payments`, { headers: getAuthHeaders() }).then(handleResponse),
+  addPayment: (data) => fetch(`${API_URL}/payments`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
   // MEMBERSHIPS
-  getMemberships: () => fetch(`${API_URL}/memberships`).then(handleResponse),
+  getMemberships: () => fetch(`${API_URL}/memberships`, { headers: getAuthHeaders() }).then(handleResponse),
+  addMembership: (data) => fetch(`${API_URL}/memberships`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updateMembership: (id, data) => fetch(`${API_URL}/memberships/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteMembership: (id) => fetch(`${API_URL}/memberships/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // ROUTINES
+  getRoutines: () => fetch(`${API_URL}/routines`, { headers: getAuthHeaders() }).then(handleResponse),
+  addRoutine: (data) => fetch(`${API_URL}/routines`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updateRoutine: (id, data) => fetch(`${API_URL}/routines/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteRoutine: (id) => fetch(`${API_URL}/routines/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
 
   // TRANSACTIONS
-  getTransactions: () => fetch(`${API_URL}/transactions`).then(handleResponse),
+  getTransactions: () => fetch(`${API_URL}/transactions`, { headers: getAuthHeaders() }).then(handleResponse),
   createTransaction: (data) => fetch(`${API_URL}/transactions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
 
   // VISITS
+  getVisits: () => fetch(`${API_URL}/visits`, { headers: getAuthHeaders() }).then(handleResponse),
   recordVisit: (data) => fetch(`${API_URL}/visits`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
 };

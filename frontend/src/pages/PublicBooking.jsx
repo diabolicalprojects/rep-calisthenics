@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, CheckCircle } from 'lucide-react';
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import Logo from '../components/Logo';
 
 const PublicBooking = () => {
@@ -20,9 +19,8 @@ const PublicBooking = () => {
 
     const checkAvailability = async () => {
         try {
-            const q = query(collection(db, 'appointments'), where('date', '==', selectedDate));
-            const snap = await getDocs(q);
-            const bookedTimes = snap.docs.map(doc => doc.data().time);
+            const data = await api.getAppointments(selectedDate);
+            const bookedTimes = data.map(app => app.time);
             
             // Allow only slots not currently booked
             const freeSlots = ALL_SLOTS.filter(slot => !bookedTimes.includes(slot));
@@ -36,7 +34,7 @@ const PublicBooking = () => {
     const handleBooking = async (e) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, 'appointments'), {
+            await api.addAppointment({
                 title: 'Clase de Muestra (Lead)',
                 memberName: formData.name,
                 phone: formData.phone,
@@ -45,8 +43,7 @@ const PublicBooking = () => {
                 time: selectedSlot,
                 duration: '1 hr',
                 status: 'Pendiente',
-                isLead: true,
-                createdAt: serverTimestamp()
+                isLead: true
             });
             setStatus('success');
         } catch (err) {

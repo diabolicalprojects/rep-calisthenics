@@ -5,8 +5,7 @@ import {
     BarChart, Bar
 } from 'recharts';
 import { Users, CreditCard, Activity, Package, TrendingUp, RefreshCw, Calendar, Target } from 'lucide-react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 
 /* ─── shared palette ───────────────────────────── */
@@ -59,8 +58,7 @@ const Analytics = () => {
         setLoading(true);
         try {
             /* MEMBERS */
-            const mSnap = await getDocs(collection(db, 'members'));
-            const members = mSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const members = await api.getMembers();
             const active = members.filter(m => m.status === 'Activo').length;
             const total = members.length;
 
@@ -76,17 +74,20 @@ const Analytics = () => {
             members.forEach(m => { if (m.plan) planMap[m.plan] = (planMap[m.plan] || 0) + 1; });
             setPlanData(Object.entries(planMap).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count));
 
-            // monthly growth (last 6 months from createdAt)
+            // monthly growth (last 6 months from created_at)
             const now = new Date();
             const months = Array.from({ length: 6 }, (_, i) => {
                 const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
                 return { month: d.toLocaleString('es', { month: 'short' }), altas: 0 };
             });
             members.forEach(m => {
-                const created = m.createdAt?.toDate?.() || (m.createdAt ? new Date(m.createdAt) : null);
+                const created = m.created_at ? new Date(m.created_at) : null;
                 if (!created) return;
                 const diff = (now.getMonth() + now.getFullYear() * 12) - (created.getMonth() + created.getFullYear() * 12);
-                if (diff >= 0 && diff < 6) months[5 - diff].altas += 1;
+                if (diff >= 0 && diff < 6) {
+                    const idx = 5 - diff;
+                    if (months[idx]) months[idx].altas += 1;
+                }
             });
             setGrowthData(months);
 
@@ -94,8 +95,8 @@ const Analytics = () => {
             let churn = 0;
             members.forEach(m => {
                 if (m.status === 'Activo') {
-                    if (!m.lastVisit) churn++;
-                    else if ((now - new Date(m.lastVisit)) / 86400000 > 15) churn++;
+                    if (!m.last_visit) churn++;
+                    else if ((now - new Date(m.last_visit)) / 86400000 > 15) churn++;
                 }
             });
 
@@ -103,13 +104,12 @@ const Analytics = () => {
             let revenue = 0, txCount = 0;
             const revByMonth = {};
             try {
-                const txSnap = await getDocs(query(collection(db, 'transactions'), orderBy('timestamp', 'desc')));
-                txSnap.docs.forEach(d => {
-                    const data = d.data();
-                    const amt = data.totalAmount || 0;
+                const transactions = await api.getTransactions();
+                transactions.forEach(data => {
+                    const amt = parseFloat(data.total_amount) || 0;
                     revenue += amt;
                     txCount++;
-                    const ts = data.timestamp?.toDate?.() || new Date(data.timestamp || Date.now());
+                    const ts = new Date(data.timestamp || Date.now());
                     const key = ts.toLocaleString('es', { month: 'short' });
                     revByMonth[key] = (revByMonth[key] || 0) + amt;
                 });
@@ -119,18 +119,18 @@ const Analytics = () => {
             /* INVENTORY */
             let invTotal = 0, critical = 0;
             try {
-                const invSnap = await getDocs(collection(db, 'inventory'));
-                invTotal = invSnap.size;
-                invSnap.docs.forEach(d => { if ((d.data().stock || d.data().quantity || 0) < 5) critical++; });
+                const inventory = await api.getInventory();
+                invTotal = inventory.length;
+                inventory.forEach(item => { if ((item.quantity || 0) < 5) critical++; });
             } catch (e) { }
 
-            /* AGENDA */
+            /* AGENDA (Mocked for now as background doesn't have it yet) */
             let todayEvents = 0;
-            const todayStr = now.toISOString().split('T')[0];
-            try {
-                const agSnap = await getDocs(collection(db, 'appointments'));
-                todayEvents = agSnap.docs.filter(d => d.data().date === todayStr).length;
-            } catch (e) { }
+            /* try {
+                const appointments = await api.getAppointments();
+                const todayStr = now.toISOString().split('T')[0];
+                todayEvents = appointments.filter(d => d.date === todayStr).length;
+            } catch (e) { } */
 
             setKpi({ active, total, churn, revenue, txCount, inventory: invTotal, critical, todayEvents });
         } catch (err) {

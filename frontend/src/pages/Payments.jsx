@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Plus, AlertCircle, Check, X } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 
 const Payments = () => {
     const [payments, setPayments] = useState([]);
@@ -12,9 +11,7 @@ const Payments = () => {
 
     const fetchPayments = async () => {
         try {
-            const q = query(collection(db, 'payments'), orderBy('date', 'desc'));
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const data = await api.getPayments();
             setPayments(data);
 
             // Calculate payment metrics
@@ -27,10 +24,9 @@ const Payments = () => {
             });
 
             // Calculate Plan Distribution
-            const membersSnap = await getDocs(collection(db, 'members'));
+            const members = await api.getMembers();
             const planCounts = {};
-            membersSnap.docs.forEach(doc => {
-                const m = doc.data();
+            members.forEach(m => {
                 if (m.plan) {
                     planCounts[m.plan] = (planCounts[m.plan] || 0) + 1;
                 }
@@ -53,12 +49,11 @@ const Payments = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, 'payments'), {
-                ...formData,
-                date: new Date().toISOString()
+            await api.addPayment({
+                ...formData
             });
             setShowModal(false);
-            setFormData({ memberName: '', concept: '', amount: '', status: 'Pagado' });
+            setFormData({ memberName: '', concept: 'Mensualidad', amount: '', status: 'Pagado' });
             fetchPayments();
         } catch (err) { console.error('Error saving payment:', err); }
     };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Play, Edit2 } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 
 const Routines = () => {
     const [routines, setRoutines] = useState([]);
@@ -9,21 +8,20 @@ const Routines = () => {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [selectedRoutine, setSelectedRoutine] = useState(null);
     const [members, setMembers] = useState([]);
+    const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ name: '', level: 'Principiante', focus: '', icon: '🔰', description: '' });
 
     const fetchRoutines = async () => {
         try {
-            const q = query(collection(db, 'routines'), orderBy('createdAt', 'desc'));
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const data = await api.getRoutines();
             setRoutines(data);
         } catch (err) { console.error('Error fetching routines:', err); }
     };
 
     const fetchMembers = async () => {
         try {
-            const snapshot = await getDocs(collection(db, 'members'));
-            setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const data = await api.getMembers();
+            setMembers(data);
         } catch (err) { console.error('Error fetching members:', err); }
     };
 
@@ -35,18 +33,38 @@ const Routines = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await addDoc(collection(db, 'routines'), {
-                ...formData,
-                createdAt: serverTimestamp()
-            });
+            if (editingId) {
+                await api.updateRoutine(editingId, formData);
+            } else {
+                await api.addRoutine(formData);
+            }
             setShowModal(false);
+            setEditingId(null);
             setFormData({ name: '', level: 'Principiante', focus: '', icon: '🔥', description: '' });
             fetchRoutines();
         } catch (err) { console.error('Error saving routine:', err); }
     };
 
     const handleEdit = (routine) => {
-        alert('Funcionalidad de edición: Proximamente');
+        setFormData({
+            name: routine.name,
+            level: routine.level,
+            focus: routine.focus,
+            icon: routine.icon,
+            description: routine.description || ''
+        });
+        setEditingId(routine.id);
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Eliminar esta rutina?')) {
+            try {
+                await api.deleteRoutine(id);
+                setShowModal(false);
+                fetchRoutines();
+            } catch (err) { console.error('Error deleting routine:', err); }
+        }
     };
 
     const handleAssign = (routine) => {
@@ -79,8 +97,8 @@ const Routines = () => {
                 <div className="modal-overlay">
                     <div className="glass-panel modal-content">
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '20px' }}>Configurar Rutina</h2>
-                            <button onClick={() => setShowModal(false)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
+                            <h2 style={{ fontSize: '20px' }}>{editingId ? 'Editar Rutina' : 'Configurar Rutina'}</h2>
+                            <button onClick={() => { setShowModal(false); setEditingId(null); setFormData({ name: '', level: 'Principiante', focus: '', icon: '🔰', description: '' }); }} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div className="form-group">
@@ -119,7 +137,14 @@ const Routines = () => {
                                 <input required type="text" placeholder="🔥" className="form-input" value={formData.icon} onChange={e => setFormData({ ...formData, icon: e.target.value })} />
                             </div>
 
-                            <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Publicar Rutina</button>
+                            <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
+                                {editingId ? 'Guardar Cambios' : 'Publicar Rutina'}
+                            </button>
+                            {editingId && (
+                                <button type="button" className="btn-ghost" style={{ color: 'var(--color-danger)', marginTop: '5px' }} onClick={() => handleDelete(editingId)}>
+                                    Eliminar Rutina
+                                </button>
+                            )}
                         </form>
                     </div>
                 </div>

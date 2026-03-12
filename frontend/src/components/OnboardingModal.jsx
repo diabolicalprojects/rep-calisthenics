@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, ArrowRight, ArrowLeft, Check, Camera, PenTool, Trash2, RotateCcw } from 'lucide-react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import SignatureCanvas from 'react-signature-canvas';
 
 const OnboardingModal = ({ plans, onClose, onSuccess }) => {
@@ -57,9 +56,8 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         }
         setLoading(true);
         try {
-            await addDoc(collection(db, 'members'), {
+            await api.addMember({
                 ...formData,
-                createdAt: serverTimestamp(),
                 lastVisit: null,
                 visitsCount: 0,
             });

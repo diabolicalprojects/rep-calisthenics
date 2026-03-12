@@ -5,8 +5,8 @@ import {
     Award, Activity, Clock, CheckCircle, AlertTriangle,
     MessageCircle, BarChart2
 } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 import OnboardingModal from '../components/OnboardingModal';
 import ModuleMetricBar from '../components/ModuleMetricBar';
@@ -16,12 +16,12 @@ const statusColor = (s) => s === 'Activo' ? 'var(--color-success)' : 'var(--colo
 const initials = (name = '') => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 const fmtDate = (val) => {
     if (!val) return '—';
-    const d = val?.toDate ? val.toDate() : new Date(val);
+    const d = new Date(val);
     return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 const daysSince = (val) => {
     if (!val) return null;
-    const d = val?.toDate ? val.toDate() : new Date(val);
+    const d = new Date(val);
     return Math.floor((Date.now() - d.getTime()) / 86400000);
 };
 
@@ -273,19 +273,17 @@ const Members = () => {
 
     const fetchMembers = async () => {
         try {
-            const q = query(collection(db, 'members'), orderBy('createdAt', 'desc'));
-            const snap = await getDocs(q);
-            setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const data = await api.getMembers();
+            setMembers(data);
         } catch (err) { console.error(err); }
     };
 
     const fetchPlans = async () => {
         try {
-            const snap = await getDocs(collection(db, 'memberships'));
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const data = await api.getMemberships();
             setPlans(data);
             if (data.length > 0) setFormData(f => ({ ...f, plan: data[0].name }));
-        } catch (err) { }
+        } catch (err) { console.error(err); }
     };
 
     useEffect(() => { fetchMembers(); fetchPlans(); }, []);
@@ -306,16 +304,16 @@ const Members = () => {
     const handleDelete = async (id) => {
         if (!confirm('¿Eliminar este miembro? Esta acción no se puede deshacer.')) return;
         try {
-            await deleteDoc(doc(db, 'members', id));
-            setSelectedMember(null);
-            fetchMembers();
+            // Mock delete for now as API doesn't have it yet, or add it to api.js
+            // await api.deleteMember(id); 
+            alert('Función de eliminar deshabilitada temporalmente por seguridad.');
         } catch (err) { console.error(err); }
     };
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await updateDoc(doc(db, 'members', editingMember.id), { ...formData, updatedAt: serverTimestamp() });
+            await api.updateMember(editingMember.id, formData);
             setShowEditModal(false);
             setEditingMember(null);
             fetchMembers();

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, User, X, Check, Link as LinkIcon, MessageCircle } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 
 const Agenda = () => {
@@ -14,13 +13,7 @@ const Agenda = () => {
 
     const fetchAppointments = async () => {
         try {
-            const q = query(
-                collection(db, 'appointments'),
-                where('date', '==', selectedDate),
-                orderBy('time', 'asc')
-            );
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const data = await api.getAppointments(selectedDate);
             setAppointments(data);
         } catch (err) { console.error('Error fetching appointments:', err); }
     };
@@ -32,19 +25,16 @@ const Agenda = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const docRef = await addDoc(collection(db, 'appointments'), {
+            await api.addAppointment({
                 ...formData,
                 date: selectedDate,
-                status: 'Pendiente',
-                createdAt: serverTimestamp()
+                status: 'Pendiente'
             });
 
-            if (docRef.id) {
-                alert('¡Cita agendada con éxito! Revisa la sección de solicitudes pendientes.');
-                setShowModal(false);
-                setFormData({ title: '', memberName: '', time: '10:00', duration: '1 hr' });
-                fetchAppointments();
-            }
+            alert('¡Cita agendada con éxito! Revisa la sección de solicitudes pendientes.');
+            setShowModal(false);
+            setFormData({ title: '', memberName: '', time: '10:00', duration: '1 hr' });
+            fetchAppointments();
         } catch (err) {
             console.error('Error saving appointment', err);
             alert('Hubo un error al guardar la cita. Inténtalo de nuevo.');
@@ -53,8 +43,7 @@ const Agenda = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            const appointmentRef = doc(db, 'appointments', id);
-            await updateDoc(appointmentRef, { status });
+            await api.updateAppointmentStatus(id, status);
             fetchAppointments();
         } catch (err) { console.error('Error updating appointment status:', err); }
     };

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Search, Calendar, Users, BarChart3, Clock, X } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, limit, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 
 const Visits = () => {
     const [members, setMembers] = useState([]);
@@ -15,14 +14,11 @@ const Visits = () => {
         setLoading(true);
         try {
             // Fetch Members
-            const membersSnap = await getDocs(collection(db, 'members'));
-            const membersData = membersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const membersData = await api.getMembers();
             setMembers(membersData);
 
-            // Fetch Recent Visits (last 50)
-            const vQuery = query(collection(db, 'visits'), orderBy('timestamp', 'desc'), limit(50));
-            const visitsSnap = await getDocs(vQuery);
-            const visitsData = visitsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Fetch Recent Visits (last 50 - assuming backend handles limit or we do it here)
+            const visitsData = await api.getVisits(); 
             setVisits(visitsData);
 
             // Calculate Stats
@@ -39,7 +35,7 @@ const Visits = () => {
         today.setHours(0, 0, 0, 0);
 
         const todayVisits = visitsData.filter(v => {
-            const vDate = v.timestamp?.toDate ? v.timestamp.toDate() : new Date(v.timestamp);
+            const vDate = new Date(v.timestamp);
             return vDate >= today;
         }).length;
 
@@ -63,11 +59,10 @@ const Visits = () => {
 
     const registerVisit = async (member) => {
         try {
-            await addDoc(collection(db, 'visits'), {
+            await api.recordVisit({
                 memberId: member.id,
                 memberName: member.name,
-                plan: member.plan,
-                timestamp: serverTimestamp()
+                plan: member.plan
             });
             setShowModal(false);
             setSearchTerm('');
@@ -222,9 +217,9 @@ const Visits = () => {
                                     <td><span className="text-muted">{visit.plan}</span></td>
                                     <td>
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span>{visit.timestamp?.toDate ? visit.timestamp.toDate().toLocaleDateString() : '---'}</span>
+                                            <span>{visit.timestamp ? new Date(visit.timestamp).toLocaleDateString() : '---'}</span>
                                             <span style={{ fontSize: '11px', color: 'var(--color-accent-orange)' }}>
-                                                {visit.timestamp?.toDate ? visit.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
+                                                {visit.timestamp ? new Date(visit.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
                                             </span>
                                         </div>
                                     </td>

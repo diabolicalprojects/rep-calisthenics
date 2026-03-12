@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, CreditCard, Edit2, Trash2, CheckCircle, Info } from 'lucide-react';
-import { collection, getDocs, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { api } from '../services/api';
 
 const Memberships = () => {
     const [plans, setPlans] = useState([]);
@@ -13,9 +12,7 @@ const Memberships = () => {
     const fetchPlans = async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, 'memberships'), orderBy('price', 'asc'));
-            const snapshot = await getDocs(q);
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const data = await api.getMemberships();
             setPlans(data);
         } catch (err) { console.error('Error fetching memberships:', err); }
         finally { setLoading(false); }
@@ -29,17 +26,13 @@ const Memberships = () => {
             const planData = {
                 ...formData,
                 price: Number(formData.price),
-                duration: Number(formData.duration),
-                updatedAt: serverTimestamp()
+                duration: Number(formData.duration)
             };
 
             if (editingPlan) {
-                await updateDoc(doc(db, 'memberships', editingPlan.id), planData);
+                await api.updateMembership(editingPlan.id, planData);
             } else {
-                await addDoc(collection(db, 'memberships'), {
-                    ...planData,
-                    createdAt: serverTimestamp()
-                });
+                await api.addMembership(planData);
             }
 
             setShowModal(false);
@@ -64,7 +57,7 @@ const Memberships = () => {
     const handleDelete = async (id) => {
         if (!confirm('¿Estás seguro de eliminar este plan? Esto no afectará a los miembros que ya lo tienen asignado, pero no podrá ser seleccionado nuevamente.')) return;
         try {
-            await deleteDoc(doc(db, 'memberships', id));
+            await api.deleteMembership(id);
             fetchPlans();
         } catch (err) { console.error('Error deleting plan:', err); }
     };

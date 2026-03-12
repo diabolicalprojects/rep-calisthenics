@@ -4,8 +4,6 @@ import { Home, Users, Dumbbell, CreditCard, Calendar, Menu, X, Package, LogOut, 
 import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
 import './Sidebar.css';
-import { auth } from '../firebase';
-import { signOut } from 'firebase/auth';
 
 const Sidebar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -25,12 +23,10 @@ const Sidebar = () => {
         { path: '/migracion', name: 'Migración', icon: <Database size={20} /> }
     ];
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.reload();
     };
 
     return (

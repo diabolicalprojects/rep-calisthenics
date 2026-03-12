@@ -57,7 +57,19 @@ CREATE TABLE IF NOT EXISTS transactions (
     cashier_name TEXT,
     items JSONB, -- Array of items sold
     type TEXT DEFAULT 'retail', -- 'retail', 'subscription', 'visit'
+    status TEXT DEFAULT 'Pagado',
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- General Payments (Accounting)
+CREATE TABLE IF NOT EXISTS payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_name TEXT,
+    member_id UUID REFERENCES members(id),
+    concept TEXT,
+    amount DECIMAL(10,2) NOT NULL,
+    status TEXT DEFAULT 'Pagado',
+    date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Visits (Access Log)
@@ -72,10 +84,12 @@ CREATE TABLE IF NOT EXISTS visits (
 CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
-    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    member_name TEXT,
     member_id UUID REFERENCES members(id),
-    type TEXT, -- 'personal_training', 'evaluation', etc.
+    time TEXT,
+    date TEXT,
+    duration TEXT,
+    status TEXT DEFAULT 'Pendiente',
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -85,7 +99,11 @@ CREATE TABLE IF NOT EXISTS routines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     member_id UUID REFERENCES members(id),
     name TEXT NOT NULL,
-    exercises JSONB, -- List of exercises
+    level TEXT,
+    focus TEXT,
+    icon TEXT,
+    description TEXT,
+    exercises JSONB,
     assigned_by UUID REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
