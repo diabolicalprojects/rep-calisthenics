@@ -6,6 +6,12 @@ import pg from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -17,6 +23,20 @@ const { Pool } = pg;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// --- DB INITIALIZATION ---
+const initDB = async () => {
+    try {
+        const sqlPath = path.join(__dirname, 'init.sql');
+        if (fs.existsSync(sqlPath)) {
+            const sql = fs.readFileSync(sqlPath, 'utf8');
+            await pool.query(sql);
+            console.log('✅ Base de Datos inicializada correctamente');
+        }
+    } catch (err) {
+        console.error('❌ Error inicializando la Base de Datos:', err);
+    }
+};
 
 app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -284,6 +304,7 @@ app.delete('/api/routines/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  await initDB();
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
 });
