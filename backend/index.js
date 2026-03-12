@@ -305,7 +305,13 @@ app.delete('/api/routines/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(port, async () => {
-  await initDB();
+// --- HEALTH CHECK ---
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Backend is reachable' });
+});
+
+// --- SERVER STARTUP ---
+app.listen(port, () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
+  initDB().catch(err => console.error('Early DB init error:', err));
 });
