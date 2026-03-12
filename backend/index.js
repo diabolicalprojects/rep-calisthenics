@@ -313,5 +313,5 @@ app.get('/api/health', (req, res) => {
 // --- SERVER STARTUP ---
 app.listen(port, () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
-  initDB().catch(err => console.error('Early DB init error:', err));
+  // initDB().catch(err => console.error('Early DB init error:', err));
 });
