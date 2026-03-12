@@ -1,0 +1,56 @@
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    /* Remove fixed width to allow natural aspect ratio */
+}
+
+.gym-logo {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+/* Base load animation */
+.animated .gym-logo {
+    animation: logoPopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes logoPopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Interactive Hover */
+.animated:hover .gym-logo {
+    transform: scale(1.05);
+    filter: drop-shadow(0 8px 15px rgba(244, 140, 37, 0.3));
+}
+
+/* Splash specific animations */
+.splash-pulse .gym-logo {
+    animation: splashBars 2s infinite ease-in-out;
+}
+
+@keyframes splashBars {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 10px rgba(244, 140, 37, 0.4));
+        transform: scale(1);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 35px rgba(244, 140, 37, 0.9));
+        transform: scale(1.08);
+    }
+}

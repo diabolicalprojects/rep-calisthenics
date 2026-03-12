@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "rep-gym-96e22"
+  },
+  "targets": {
+    "rep-gym-96e22": {
+      "hosting": {
+        "production": [
+          "rep-calisthenics-app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

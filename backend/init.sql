@@ -1,0 +1,108 @@
+-- Extension for UUIDs
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Users (Auth)
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT DEFAULT 'admin',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Members
+CREATE TABLE IF NOT EXISTS members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    plan TEXT,
+    status TEXT DEFAULT 'active',
+    join_date DATE DEFAULT CURRENT_DATE,
+    expiration_date DATE,
+    photo_url TEXT,
+    signature_data TEXT,
+    last_visit TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Memberships (Plans)
+CREATE TABLE IF NOT EXISTS memberships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    duration_days INTEGER DEFAULT 30,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inventory
+CREATE TABLE IF NOT EXISTS inventory (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INTEGER DEFAULT 0,
+    category TEXT,
+    min_stock INTEGER DEFAULT 5,
+    last_update TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions (POS)
+CREATE TABLE IF NOT EXISTS transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    total_amount DECIMAL(10,2) NOT NULL,
+    payment_method TEXT,
+    cashier_id UUID REFERENCES users(id),
+    cashier_name TEXT,
+    items JSONB, -- Array of items sold
+    type TEXT DEFAULT 'retail', -- 'retail', 'subscription', 'visit'
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Visits (Access Log)
+CREATE TABLE IF NOT EXISTS visits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id UUID REFERENCES members(id),
+    member_name TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Agenda (Appointments)
+CREATE TABLE IF NOT EXISTS appointments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    member_id UUID REFERENCES members(id),
+    type TEXT, -- 'personal_training', 'evaluation', etc.
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Routines
+CREATE TABLE IF NOT EXISTS routines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id UUID REFERENCES members(id),
+    name TEXT NOT NULL,
+    exercises JSONB, -- List of exercises
+    assigned_by UUID REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Initial Data
+INSERT INTO users (name, email, password, role) 
+VALUES ('Administrador', 'admin@gym.com', 'admin123', 'admin')
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO memberships (name, price, duration_days) VALUES 
+('Básico', 350.00, 30),
+('Pro', 600.00, 30),
+('Piso Libre', 450.00, 30)
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO inventory (name, price, quantity, category) VALUES 
+('Proteína Whey 1kg', 850.00, 15, 'Suplementos'),
+('Creatina 300g', 450.00, 10, 'Suplementos'),
+('Agua 600ml', 15.00, 50, 'Bebidas')
+ON CONFLICT DO NOTHING;
