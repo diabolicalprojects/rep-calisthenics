@@ -19,6 +19,10 @@ const app = express();
 const port = 4000; // Hardcoded to match Dokploy configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_gym_key';
 
+if (!process.env.DATABASE_URL) {
+  console.error('CRITICAL: DATABASE_URL is not set!');
+}
+
 const { Pool } = pg;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -311,7 +315,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // --- SERVER STARTUP ---
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
   // initDB().catch(err => console.error('Early DB init error:', err));
 });
