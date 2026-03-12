@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 import Splash from './components/Splash';
 import Login from './pages/Login';
-import Login from './pages/Login';
 
 import Members from './pages/Members';
 import Routines from './pages/Routines';
