@@ -22,6 +22,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret_gym_key';
 const { Pool } = pg;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: false
 });
 
 // --- DB INITIALIZATION ---
