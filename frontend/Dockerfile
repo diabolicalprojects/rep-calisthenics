@@ -1,6 +1,9 @@
 # Etapa 1: Construcción
 FROM node:18-alpine as build-stage
 
+ARG CACHE_BUST=1.0.7
+ENV CACHE_BUST=$CACHE_BUST
+
 WORKDIR /app
 
 COPY package*.json ./
