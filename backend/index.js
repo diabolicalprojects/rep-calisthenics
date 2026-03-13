@@ -18,7 +18,7 @@ dotenv.config();
 const app = express();
 const port = 4000; // Hardcoded to match Dokploy configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_gym_key';
-const APP_VERSION = '1.0.4'; // Updated version
+const APP_VERSION = '1.0.5'; // Bump version again to clear cache confusion
 
 if (!process.env.DATABASE_URL) {
   console.error('CRITICAL: DATABASE_URL is not set!');
