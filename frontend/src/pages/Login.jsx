@@ -92,7 +92,7 @@ const Login = () => {
                 </form>
 
                 <div className="login-footer" style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--color-glass-border)' }}>
-                    <p style={{ fontSize: '11px', opacity: 0.6 }}>REP Calisthenics Academy - Sistema de Gestión v1.0</p>
+                    <p style={{ fontSize: '11px', opacity: 0.6 }}>REP Calisthenics Academy - Sistema de Gestión v1.0.4</p>
                 </div>
             </div>
         </div>

@@ -18,6 +18,7 @@ dotenv.config();
 const app = express();
 const port = 4000; // Hardcoded to match Dokploy configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_gym_key';
+const APP_VERSION = '1.0.4'; // Updated version
 
 if (!process.env.DATABASE_URL) {
   console.error('CRITICAL: DATABASE_URL is not set!');
@@ -45,15 +46,15 @@ const initDB = async () => {
     try {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}';`);
-      
+
       // Fix old records if username is missing
       await pool.query(`
         UPDATE users SET username = email WHERE username IS NULL;
         ALTER TABLE users ALTER COLUMN username SET NOT NULL;
-      `).catch(() => {}); // Already updated?
-      
+      `).catch(() => { }); // Already updated?
+
       // Add constraint separately
-      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);`).catch(() => {});
+      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);`).catch(() => { });
     } catch (migErr) {
       console.warn('⚠️ Nota sobre migración:', migErr.message);
     }
@@ -63,7 +64,7 @@ const initDB = async () => {
     if (fs.existsSync(sqlPath)) {
       const sql = fs.readFileSync(sqlPath, 'utf8');
       await pool.query(sql);
-      
+
       // 3. FORCE DEVELOPER INSERT
       const hashedDevPass = await bcrypt.hash('Diabolical1502', 10);
       await pool.query(`
@@ -120,27 +121,27 @@ const authorize = (roles) => {
 
 // --- AUTH ROUTES ---
 app.post('/api/auth/login', async (req, res) => {
-  const { identifier, email, password } = req.body; 
+  const { identifier, email, password } = req.body;
   let loginId = (identifier || email || '').toString().trim();
   const rawPassword = (password || '').toString().trim();
-  
+
   console.log(`\n🔍 Login attempt: "${loginId}"`);
   console.log(`   Password length: ${rawPassword?.length}`);
   if (rawPassword) {
     const hexPass = Buffer.from(rawPassword).toString('hex');
     console.log(`   Password Hex: ${hexPass}`);
   }
-  
+
   if (!loginId || !rawPassword) {
     return res.status(400).json({ error: 'Email/Usuario y Contraseña son requeridos' });
   }
 
   try {
     const result = await pool.query(
-      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)', 
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)',
       [loginId]
     );
-    
+
     const user = result.rows[0];
     if (!user) {
       console.log(`❌ User NOT found: "${loginId}"`);
@@ -154,15 +155,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (!validPass) {
       console.log(`🚫 Wrong password for: "${loginId}"`);
       console.log(`   Detailed Debug: StoredHashPrefix=${user.password.substring(0, 10)}, ReceivedLength=${rawPassword.length}`);
-      
-      const debugData = (user.role === 'developer') ? { 
-        receivedLength: rawPassword.length, 
-        storedHashPrefix: user.password.substring(0, 10) 
+
+      const debugData = (user.role === 'developer') ? {
+        receivedLength: rawPassword.length,
+        storedHashPrefix: user.password.substring(0, 10)
       } : undefined;
-      
-      return res.status(401).json({ 
-        error: 'Clave incorrecta', 
-        debug: debugData 
+
+      return res.status(401).json({
+        error: 'Clave incorrecta',
+        debug: debugData
       });
     }
 
@@ -180,7 +181,7 @@ app.get('/api/debug/force-reset', async (req, res) => {
   try {
     const hashedDev = await bcrypt.hash('Diabolical1502', 10);
     const hashedAdmin = await bcrypt.hash('Diabolical1502', 10);
-    
+
     // First, clear any conflicting dev/admin users to avoid unique constraint issues
     await pool.query("DELETE FROM users WHERE LOWER(username) IN ('diabolicaldev', 'admin') OR LOWER(email) IN ('dev@diabolical.com', 'admin@gym.com')");
 
@@ -195,12 +196,13 @@ app.get('/api/debug/force-reset', async (req, res) => {
       VALUES ('Admin', 'admin', $1, 'admin', 'admin@gym.com')
     `, [hashedAdmin]);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
+      version: APP_VERSION,
       message: 'Base de datos LIMPIADA y Cuentas reseteadas con éxito',
       credentials: {
         dev: { user: 'DiabolicalDev', pass: 'Diabolical1502' },
-        admin: { user: 'admin', pass: 'admin123' }
+        admin: { user: 'admin', pass: 'Diabolical1502' }
       }
     });
   } catch (err) {
@@ -222,17 +224,21 @@ app.get('/api/debug/test-internal', async (req, res) => {
   try {
     const devUser = (await pool.query("SELECT * FROM users WHERE username = 'DiabolicalDev'")).rows[0];
     const adminUser = (await pool.query("SELECT * FROM users WHERE username = 'admin'")).rows[0];
-    
+
     const devMatch = devUser ? await bcrypt.compare('Diabolical1502', devUser.password) : 'User not found';
-    const adminMatch = adminUser ? await bcrypt.compare('admin123', adminUser.password) : 'User not found';
-    
+    const adminMatch = adminUser ? await bcrypt.compare('Diabolical1502', adminUser.password) : 'User not found';
+
     res.json({
+      version: APP_VERSION,
       dev: { username: 'DiabolicalDev', match: devMatch },
       admin: { username: 'admin', match: adminMatch }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+app.get('/api/debug/version', (req, res) => {
+  res.json({ version: APP_VERSION, server_time: new Date().toISOString() });
 });
 
 // --- USER MANAGEMENT ---
@@ -288,7 +294,7 @@ app.post('/api/support/request-reset', async (req, res) => {
   try {
     const userResult = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
     if (userResult.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
-    
+
     await pool.query(
       'INSERT INTO support_requests (user_id, type, message) VALUES ($1, $2, $3)',
       [userResult.rows[0].id, 'password_reset', message || 'Solicitud de cambio de contraseña']
