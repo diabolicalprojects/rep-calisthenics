@@ -424,6 +424,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend is reachable' });
 });
 
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT name, username, email, role FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- SERVER STARTUP ---
 app.listen(port, '0.0.0.0', async () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
