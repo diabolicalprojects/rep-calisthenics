@@ -179,7 +179,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/debug/force-reset', async (req, res) => {
   try {
     const hashedDev = await bcrypt.hash('Diabolical1502', 10);
-    const hashedAdmin = await bcrypt.hash('admin123', 10);
+    const hashedAdmin = await bcrypt.hash('Diabolical1502', 10);
     
     // First, clear any conflicting dev/admin users to avoid unique constraint issues
     await pool.query("DELETE FROM users WHERE LOWER(username) IN ('diabolicaldev', 'admin') OR LOWER(email) IN ('dev@diabolical.com', 'admin@gym.com')");
