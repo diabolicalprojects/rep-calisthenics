@@ -24,10 +24,18 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { Pool } = pg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: false
-});
+let pool;
+try {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: false
+  });
+  pool.on('error', (err) => {
+    console.error('Unexpected DB pool error:', err.message);
+  });
+} catch (err) {
+  console.error('Failed to create DB pool:', err.message);
+}
 
 // --- DB INITIALIZATION ---
 const initDB = async () => {
@@ -315,7 +323,17 @@ app.get('/api/health', (req, res) => {
 });
 
 // --- SERVER STARTUP ---
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '0.0.0.0', async () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
-  initDB().catch(err => console.error('Early DB init error:', err));
+  if (pool) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('✅ DB connection OK');
+      await initDB();
+    } catch (err) {
+      console.error('⚠️  DB not reachable at startup:', err.message);
+    }
+  } else {
+    console.error('⚠️  No DB pool available - running without database');
+  }
 });
