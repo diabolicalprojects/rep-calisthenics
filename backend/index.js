@@ -429,6 +429,52 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend is reachable' });
 });
 
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT name, username, email, role, password FROM users');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/debug/setup', async (req, res) => {
+  const reports = [];
+  try {
+    reports.push("Starting manual setup...");
+    
+    // 1. Ensure columns
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}';`);
+    reports.push("Columns check done.");
+
+    // 2. Fix NULL usernames
+    const fixNulls = await pool.query(`UPDATE users SET username = email WHERE username IS NULL RETURNING id`);
+    reports.push(`Fixed ${fixNulls.rowCount} NULL usernames.`);
+
+    // 3. Ensure constraint
+    try {
+      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);`);
+      reports.push("Constraint added.");
+    } catch (e) {
+      reports.push(`Constraint note: ${e.message}`);
+    }
+
+    // 4. Force Developer
+    const devResult = await pool.query(`
+      INSERT INTO users (name, username, password, role, email) 
+      VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer', 'dev@diabolical.com')
+      ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = 'developer'
+      RETURNING id, username
+    `);
+    reports.push(`Developer result: ${JSON.stringify(devResult.rows[0])}`);
+
+    res.json({ success: true, log: reports });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message, log: reports });
+  }
+});
+
 // --- SERVER STARTUP ---
 app.listen(port, '0.0.0.0', async () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
