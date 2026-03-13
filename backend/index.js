@@ -44,7 +44,28 @@ const initDB = async () => {
     if (fs.existsSync(sqlPath)) {
       const sql = fs.readFileSync(sqlPath, 'utf8');
       await pool.query(sql);
-      console.log('✅ Base de Datos inicializada correctamente');
+      
+      // MIGRATION: ensure columns exist
+      await pool.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}';
+      `);
+      
+      // MIGRATION: fix old records if username is missing
+      await pool.query(`
+        UPDATE users SET username = email WHERE username IS NULL;
+        ALTER TABLE users ALTER COLUMN username SET NOT NULL;
+        ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);
+      `).catch(() => {}); // Ignore if already set
+
+      // FORCE DEVELOPER INSERT
+      await pool.query(`
+        INSERT INTO users (name, username, password, role) 
+        VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer')
+        ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = 'developer';
+      `);
+
+      console.log('✅ Base de Datos y Roles actualizados correctamente');
     }
   } catch (err) {
     console.error('❌ Error inicializando la Base de Datos:', err);
