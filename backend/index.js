@@ -124,7 +124,7 @@ app.post('/api/auth/login', async (req, res) => {
   let loginId = (identifier || email || '').toString().trim();
   const rawPassword = (password || '').toString().trim();
   
-  console.log(`🔐 Intento de login para: "${loginId}"`);
+  console.log(`🔐 Login attempt: "${loginId}" (Pass Length: ${rawPassword.length})`);
   
   if (!loginId || !rawPassword) {
     return res.status(400).json({ error: 'Email/Usuario y Contraseña son requeridos' });
@@ -138,28 +138,21 @@ app.post('/api/auth/login', async (req, res) => {
     
     const user = result.rows[0];
     if (!user) {
-      console.log(`❌ Usuario no encontrado: "${loginId}"`);
+      console.log(`❌ User NOT found: "${loginId}"`);
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    console.log(`👤 Usuario encontrado: ${user.username} (Rol: ${user.role})`);
+    console.log(`👤 User found: ID=${user.id}, User=${user.username}, Role=${user.role}`);
 
     // Secure password check
-    try {
-      const validPass = await bcrypt.compare(rawPassword, user.password);
-      if (!validPass) {
-        console.log(`🚫 Clave incorrecta para: "${loginId}"`);
-        // Debug: Log if stored password looks like a hash
-        const isHash = user.password.startsWith('$2');
-        console.log(`   (Nota: La clave almacenada ${isHash ? 'SÍ' : 'NO'} es un hash válido)`);
-        return res.status(401).json({ error: 'Clave incorrecta' });
-      }
-    } catch (bcryptErr) {
-      console.error('Bcrypt error:', bcryptErr);
-      return res.status(500).json({ error: 'Error interno de validación' });
+    const validPass = await bcrypt.compare(rawPassword, user.password);
+    if (!validPass) {
+      console.log(`🚫 Wrong password for: "${loginId}"`);
+      console.log(`   Detailed Debug: StoredHashPrefix=${user.password.substring(0, 7)}, ReceivedLength=${rawPassword.length}`);
+      return res.status(401).json({ error: 'Clave incorrecta' });
     }
 
-    console.log(`✅ Login exitoso: ${user.username}`);
+    console.log(`✅ Login successful: ${user.username}`);
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, role: user.role }, JWT_SECRET);
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role, permissions: user.permissions } });
   } catch (err) {
@@ -174,25 +167,23 @@ app.get('/api/debug/force-reset', async (req, res) => {
     const hashedDev = await bcrypt.hash('Diabolical1502', 10);
     const hashedAdmin = await bcrypt.hash('admin123', 10);
     
-    // Split queries to avoid "cannot insert multiple commands into a prepared statement"
+    // First, clear any conflicting dev/admin users to avoid unique constraint issues
+    await pool.query("DELETE FROM users WHERE LOWER(username) IN ('diabolicaldev', 'admin') OR LOWER(email) IN ('dev@diabolical.com', 'admin@gym.com')");
+
+    // Insert clean accounts
     await pool.query(`
-      UPDATE users SET password = $1, role = 'developer' WHERE LOWER(username) = 'diabolicaldev';
+      INSERT INTO users (name, username, password, role, email) 
+      VALUES ('Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com')
     `, [hashedDev]);
 
     await pool.query(`
-      INSERT INTO users (name, username, password, role, email)
-      SELECT 'Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com'
-      WHERE NOT EXISTS (SELECT 1 FROM users WHERE LOWER(username) = 'diabolicaldev');
-    `, [hashedDev]);
-
-    await pool.query(`
-      UPDATE users SET password = $1, role = 'admin', username = 'admin' 
-      WHERE LOWER(username) = 'admin' OR LOWER(email) = 'admin@gym.com';
+      INSERT INTO users (name, username, password, role, email) 
+      VALUES ('Admin', 'admin', $1, 'admin', 'admin@gym.com')
     `, [hashedAdmin]);
 
     res.json({ 
       success: true, 
-      message: 'Developer y Admin han sido reseteados con éxito',
+      message: 'Base de datos LIMPIADA y Cuentas reseteadas con éxito',
       credentials: {
         dev: { user: 'DiabolicalDev', pass: 'Diabolical1502' },
         admin: { user: 'admin', pass: 'admin123' }
@@ -200,6 +191,15 @@ app.get('/api/debug/force-reset', async (req, res) => {
     });
   } catch (err) {
     console.error('Force reset error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/debug/users-check', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, username, email, role, (password LIKE $1) as is_hashed FROM users', ['$2%']);
+    res.json(result.rows);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
