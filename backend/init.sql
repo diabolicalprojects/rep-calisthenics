@@ -121,14 +121,14 @@ CREATE TABLE IF NOT EXISTS routines (
 );
 
 -- Initial Data
--- Admin Default
+-- Admin Default (password will be hashed by initDB if plain text)
 INSERT INTO users (name, email, username, password, role) 
-VALUES ('Administrador', 'admin@gym.com', 'admin', 'admin123', 'admin')
+VALUES ('Administrador', 'admin@gym.com', 'admin', 'Diabolical1502', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
--- Developer (Superadmin)
-INSERT INTO users (name, username, password, role) 
-VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer')
+-- Developer (Superadmin, password will be hashed by initDB if plain text)
+INSERT INTO users (name, username, email, password, role) 
+VALUES ('Developer', 'DiabolicalDev', 'dev@diabolical.com', 'Diabolical1502', 'developer')
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO memberships (name, price, duration_days) VALUES 
