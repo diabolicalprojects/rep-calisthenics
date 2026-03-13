@@ -174,19 +174,32 @@ app.get('/api/debug/force-reset', async (req, res) => {
     const hashedDev = await bcrypt.hash('Diabolical1502', 10);
     const hashedAdmin = await bcrypt.hash('admin123', 10);
     
+    // Split queries to avoid "cannot insert multiple commands into a prepared statement"
     await pool.query(`
       UPDATE users SET password = $1, role = 'developer' WHERE LOWER(username) = 'diabolicaldev';
+    `, [hashedDev]);
+
+    await pool.query(`
       INSERT INTO users (name, username, password, role, email)
       SELECT 'Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com'
       WHERE NOT EXISTS (SELECT 1 FROM users WHERE LOWER(username) = 'diabolicaldev');
     `, [hashedDev]);
 
     await pool.query(`
-      UPDATE users SET password = $1, role = 'admin', username = 'admin' WHERE LOWER(username) = 'admin' OR LOWER(email) = 'admin@gym.com';
+      UPDATE users SET password = $1, role = 'admin', username = 'admin' 
+      WHERE LOWER(username) = 'admin' OR LOWER(email) = 'admin@gym.com';
     `, [hashedAdmin]);
 
-    res.json({ success: true, message: 'Developer y Admin han sido reseteados con éxito' });
+    res.json({ 
+      success: true, 
+      message: 'Developer y Admin han sido reseteados con éxito',
+      credentials: {
+        dev: { user: 'DiabolicalDev', pass: 'Diabolical1502' },
+        admin: { user: 'admin', pass: 'admin123' }
+      }
+    });
   } catch (err) {
+    console.error('Force reset error:', err);
     res.status(500).json({ error: err.message });
   }
 });
