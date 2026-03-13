@@ -204,6 +204,23 @@ app.get('/api/debug/users-check', async (req, res) => {
   }
 });
 
+app.get('/api/debug/test-internal', async (req, res) => {
+  try {
+    const devUser = (await pool.query("SELECT * FROM users WHERE username = 'DiabolicalDev'")).rows[0];
+    const adminUser = (await pool.query("SELECT * FROM users WHERE username = 'admin'")).rows[0];
+    
+    const devMatch = devUser ? await bcrypt.compare('Diabolical1502', devUser.password) : 'User not found';
+    const adminMatch = adminUser ? await bcrypt.compare('admin123', adminUser.password) : 'User not found';
+    
+    res.json({
+      dev: { username: 'DiabolicalDev', match: devMatch },
+      admin: { username: 'admin', match: adminMatch }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- USER MANAGEMENT ---
 app.get('/api/users', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
   try {
