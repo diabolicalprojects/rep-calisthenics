@@ -5,9 +5,11 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
+    username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    role TEXT DEFAULT 'admin',
+    role TEXT DEFAULT 'coach', -- 'developer', 'admin', 'coach'
+    permissions JSONB DEFAULT '{}', -- For coaches: { "inventory": true, "payments": false, etc. }
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -80,6 +82,16 @@ CREATE TABLE IF NOT EXISTS visits (
     timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Support Requests (For password resets etc)
+CREATE TABLE IF NOT EXISTS support_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    type TEXT NOT NULL, -- e.g., 'password_reset'
+    message TEXT,
+    status TEXT DEFAULT 'pending', -- 'pending', 'resolved'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Agenda (Appointments)
 CREATE TABLE IF NOT EXISTS appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -109,9 +121,15 @@ CREATE TABLE IF NOT EXISTS routines (
 );
 
 -- Initial Data
-INSERT INTO users (name, email, password, role) 
-VALUES ('Administrador', 'admin@gym.com', 'admin123', 'admin')
-ON CONFLICT (email) DO NOTHING;
+-- Admin Default
+INSERT INTO users (name, email, username, password, role) 
+VALUES ('Administrador', 'admin@gym.com', 'admin', 'admin123', 'admin')
+ON CONFLICT (username) DO NOTHING;
+
+-- Developer (Superadmin)
+INSERT INTO users (name, username, password, role) 
+VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer')
+ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO memberships (name, price, duration_days) VALUES 
 ('Básico', 350.00, 30),

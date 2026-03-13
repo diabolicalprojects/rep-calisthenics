@@ -69,23 +69,98 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+const authorize = (roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Acceso denegado: Permisos insuficientes' });
+    }
+    next();
+  };
+};
+
 // --- AUTH ROUTES ---
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body; // identifier can be email or username
   try {
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1 OR username = $1', 
+      [identifier]
+    );
     const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    // Simple password check (for MVP, standard bcrypt in production)
-    const validPass = password === user.password; // user.password is plain text per init.sql for simplicity now
+    // Simple password check (plain text per user request for easy viewing)
+    const validPass = password === user.password;
     if (!validPass) return res.status(401).json({ error: 'Clave incorrecta' });
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    const token = jwt.sign({ id: user.id, email: user.email, username: user.username, role: user.role }, JWT_SECRET);
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role, permissions: user.permissions } });
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ error: 'Error en login' });
   }
+});
+
+// --- USER MANAGEMENT ---
+app.get('/api/users', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
+  try {
+    // Developers see everyone. Admins see everyone except developers.
+    let queryText = 'SELECT id, name, email, username, role, permissions, created_at FROM users';
+    let params = [];
+    if (req.user.role === 'admin') {
+      queryText = 'SELECT id, name, email, username, role, permissions, created_at FROM users WHERE role != \'developer\'';
+    }
+    const result = await pool.query(queryText, params);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/users/reveal-passwords', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
+  const { password } = req.body;
+  try {
+    // SECURITY LOCK: Re-verify requester's password
+    const verifyResult = await pool.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+    if (verifyResult.rows[0].password !== password) {
+      return res.status(401).json({ error: 'Credenciales de seguridad incorrectas' });
+    }
+
+    let queryText = 'SELECT username, password, role FROM users';
+    if (req.user.role === 'admin') {
+      queryText = 'SELECT username, password, role FROM users WHERE role != \'developer\'';
+    }
+    const result = await pool.query(queryText);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/users', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
+  const { name, email, username, password, role, permissions } = req.body;
+  try {
+    // Admins cannot create developers
+    if (req.user.role === 'admin' && role === 'developer') {
+      return res.status(403).json({ error: 'No tienes permiso para crear usuarios Developer' });
+    }
+    const result = await pool.query(
+      'INSERT INTO users (name, email, username, password, role, permissions) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, username, role',
+      [name, email, username, password, role, JSON.stringify(permissions || {})]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- SUPPORT / PASSWORD REQUESTS ---
+app.post('/api/support/request-reset', async (req, res) => {
+  const { username, message } = req.body;
+  try {
+    const userResult = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+    if (userResult.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    
+    await pool.query(
+      'INSERT INTO support_requests (user_id, type, message) VALUES ($1, $2, $3)',
+      [userResult.rows[0].id, 'password_reset', message || 'Solicitud de cambio de contraseña']
+    );
+    res.json({ message: 'Solicitud enviada a los administradores' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // --- MEMBERS ---
