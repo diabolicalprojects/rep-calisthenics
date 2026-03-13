@@ -124,7 +124,12 @@ app.post('/api/auth/login', async (req, res) => {
   let loginId = (identifier || email || '').toString().trim();
   const rawPassword = (password || '').toString().trim();
   
-  console.log(`🔐 Login attempt: "${loginId}" (Pass Length: ${rawPassword.length})`);
+  console.log(`\n🔍 Login attempt: "${loginId}"`);
+  console.log(`   Password length: ${rawPassword?.length}`);
+  if (rawPassword) {
+    const hexPass = Buffer.from(rawPassword).toString('hex');
+    console.log(`   Password Hex: ${hexPass}`);
+  }
   
   if (!loginId || !rawPassword) {
     return res.status(400).json({ error: 'Email/Usuario y Contraseña son requeridos' });
