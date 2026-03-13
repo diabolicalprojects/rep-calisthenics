@@ -64,19 +64,27 @@ const initDB = async () => {
       const sql = fs.readFileSync(sqlPath, 'utf8');
       await pool.query(sql);
       
-      // 3. FORCE DEVELOPER INSERT (Always ensure it exists with correct credentials)
+      // 3. FORCE DEVELOPER INSERT
+      const hashedDevPass = await bcrypt.hash('Diabolical1502', 10);
       await pool.query(`
         INSERT INTO users (name, username, password, role, email) 
-        VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer', 'dev@diabolical.com')
-        ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = 'developer';
-      `);
+        VALUES ('Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com')
+        ON CONFLICT (username) DO UPDATE SET password = $1, role = 'developer';
+      `, [hashedDevPass]);
 
-      // 4. FIX ADMIN (Ensure it has a proper username if it was migrated wrong)
-      await pool.query(`
-        UPDATE users SET username = 'admin' WHERE username = 'admin@gym.com';
-      `).catch(() => {});
+      // 4. FIX ADMIN and other users (Hash plain text passwords)
+      const allUsers = await pool.query('SELECT id, password, username FROM users');
+      for (const u of allUsers.rows) {
+        if (u.password && !u.password.startsWith('$2a$') && !u.password.startsWith('$2b$')) {
+          const hashed = await bcrypt.hash(u.password, 10);
+          await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, u.id]);
+        }
+        if (u.username === 'admin@gym.com') {
+          await pool.query("UPDATE users SET username = 'admin' WHERE id = $1", [u.id]);
+        }
+      }
 
-      console.log('✅ Base de Datos y Roles actualizados correctamente');
+      console.log('✅ Base de Datos y Roles actualizados (Bcrypt activado)');
     }
   } catch (err) {
     console.error('❌ Error inicializando la Base de Datos:', err);
@@ -119,14 +127,14 @@ app.post('/api/auth/login', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1 OR username = $1', 
+      'SELECT * FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)', 
       [loginId]
     );
     const user = result.rows[0];
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-    // Simple password check (plain text per user request for easy viewing)
-    const validPass = password === user.password;
+    // Secure password check
+    const validPass = await bcrypt.compare(password, user.password);
     if (!validPass) return res.status(401).json({ error: 'Clave incorrecta' });
 
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, role: user.role }, JWT_SECRET);
