@@ -2,7 +2,7 @@
     "name": "rep-calisthenics-backend",
     "version": "1.0.0",
     "description": "Backend API para REP Calisthenics",
-    "main": "server.js",
+    "main": "index.js",
     "type": "module",
     "scripts": {
         "start": "node index.js",
@@ -13,9 +13,11 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.19.2",
+        "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.3",
-        "mongoose": "^8.2.3",
+        "morgan": "^1.10.0",
         "multer": "^2.0.2",
+        "pg": "^8.11.3",
         "xlsx": "^0.18.5"
     },
     "devDependencies": {
