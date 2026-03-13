@@ -148,8 +148,17 @@ app.post('/api/auth/login', async (req, res) => {
     const validPass = await bcrypt.compare(rawPassword, user.password);
     if (!validPass) {
       console.log(`🚫 Wrong password for: "${loginId}"`);
-      console.log(`   Detailed Debug: StoredHashPrefix=${user.password.substring(0, 7)}, ReceivedLength=${rawPassword.length}`);
-      return res.status(401).json({ error: 'Clave incorrecta' });
+      console.log(`   Detailed Debug: StoredHashPrefix=${user.password.substring(0, 10)}, ReceivedLength=${rawPassword.length}`);
+      
+      const debugData = (user.role === 'developer') ? { 
+        receivedLength: rawPassword.length, 
+        storedHashPrefix: user.password.substring(0, 10) 
+      } : undefined;
+      
+      return res.status(401).json({ 
+        error: 'Clave incorrecta', 
+        debug: debugData 
+      });
     }
 
     console.log(`✅ Login successful: ${user.username}`);
