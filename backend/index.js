@@ -31,16 +31,16 @@ const pool = new Pool({
 
 // --- DB INITIALIZATION ---
 const initDB = async () => {
-    try {
-        const sqlPath = path.join(__dirname, 'init.sql');
-        if (fs.existsSync(sqlPath)) {
-            const sql = fs.readFileSync(sqlPath, 'utf8');
-            await pool.query(sql);
-            console.log('✅ Base de Datos inicializada correctamente');
-        }
-    } catch (err) {
-        console.error('❌ Error inicializando la Base de Datos:', err);
+  try {
+    const sqlPath = path.join(__dirname, 'init.sql');
+    if (fs.existsSync(sqlPath)) {
+      const sql = fs.readFileSync(sqlPath, 'utf8');
+      await pool.query(sql);
+      console.log('✅ Base de Datos inicializada correctamente');
     }
+  } catch (err) {
+    console.error('❌ Error inicializando la Base de Datos:', err);
+  }
 };
 
 app.use(cors());
@@ -232,7 +232,7 @@ app.post('/api/visits', async (req, res) => {
   try {
     await pool.query('INSERT INTO visits (member_id, member_name) VALUES ($1, $2)', [member_id, member_name]);
     if (member_id) {
-        await pool.query('UPDATE members SET last_visit=NOW() WHERE id=$1', [member_id]);
+      await pool.query('UPDATE members SET last_visit=NOW() WHERE id=$1', [member_id]);
     }
     res.sendStatus(201);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -317,5 +317,5 @@ app.get('/api/health', (req, res) => {
 // --- SERVER STARTUP ---
 app.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Motor del Gym corriendo en port ${port}`);
-  // initDB().catch(err => console.error('Early DB init error:', err));
+  initDB().catch(err => console.error('Early DB init error:', err));
 });
