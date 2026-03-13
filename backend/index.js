@@ -40,25 +40,31 @@ try {
 // --- DB INITIALIZATION ---
 const initDB = async () => {
   try {
+    // 1. MIGRATION FIRST: Ensure balance/columns exist before running main SQL
+    console.log('🔄 Verificando esquema de base de datos...');
+    try {
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}';`);
+      
+      // Fix old records if username is missing
+      await pool.query(`
+        UPDATE users SET username = email WHERE username IS NULL;
+        ALTER TABLE users ALTER COLUMN username SET NOT NULL;
+      `).catch(() => {}); // Already updated?
+      
+      // Add constraint separately
+      await pool.query(`ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);`).catch(() => {});
+    } catch (migErr) {
+      console.warn('⚠️ Nota sobre migración:', migErr.message);
+    }
+
+    // 2. Initialize tables (if not exists)
     const sqlPath = path.join(__dirname, 'init.sql');
     if (fs.existsSync(sqlPath)) {
       const sql = fs.readFileSync(sqlPath, 'utf8');
       await pool.query(sql);
       
-      // MIGRATION: ensure columns exist
-      await pool.query(`
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS permissions JSONB DEFAULT '{}';
-      `);
-      
-      // MIGRATION: fix old records if username is missing
-      await pool.query(`
-        UPDATE users SET username = email WHERE username IS NULL;
-        ALTER TABLE users ALTER COLUMN username SET NOT NULL;
-        ALTER TABLE users ADD CONSTRAINT users_username_key UNIQUE (username);
-      `).catch(() => {}); // Ignore if already set
-
-      // FORCE DEVELOPER INSERT
+      // 3. FORCE DEVELOPER INSERT (Always ensure it exists with correct credentials)
       await pool.query(`
         INSERT INTO users (name, username, password, role) 
         VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer')
