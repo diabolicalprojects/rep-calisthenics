@@ -66,10 +66,15 @@ const initDB = async () => {
       
       // 3. FORCE DEVELOPER INSERT (Always ensure it exists with correct credentials)
       await pool.query(`
-        INSERT INTO users (name, username, password, role) 
-        VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer')
+        INSERT INTO users (name, username, password, role, email) 
+        VALUES ('Developer', 'DiabolicalDev', 'Diabolical1502', 'developer', 'dev@diabolical.com')
         ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = 'developer';
       `);
+
+      // 4. FIX ADMIN (Ensure it has a proper username if it was migrated wrong)
+      await pool.query(`
+        UPDATE users SET username = 'admin' WHERE username = 'admin@gym.com';
+      `).catch(() => {});
 
       console.log('✅ Base de Datos y Roles actualizados correctamente');
     }
@@ -422,15 +427,6 @@ app.delete('/api/routines/:id', async (req, res) => {
 // --- HEALTH CHECK ---
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Backend is reachable' });
-});
-
-app.get('/api/debug/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT name, username, email, role FROM users');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // --- SERVER STARTUP ---
