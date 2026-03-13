@@ -15,11 +15,8 @@ const Login = () => {
         setLoading(true);
 
         try {
-            // Using email as username for consistency with typical backend logins
-            // We'll normalize 'admin' to 'admin@gym.com' for the example admin if needed
-            const loginEmail = username.includes('@') ? username : 'admin@gym.com';
-            
-            const response = await api.login({ email: loginEmail, password });
+            // Send the identifier exactly as typed (could be username or email)
+            const response = await api.login({ identifier: username, password });
             
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
