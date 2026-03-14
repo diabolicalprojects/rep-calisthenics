@@ -6,6 +6,9 @@ import HelpTooltip from '../components/HelpTooltip';
 const Agenda = () => {
     const [appointments, setAppointments] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showLinkModal, setShowLinkModal] = useState(null);
+    const [allMembers, setAllMembers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [formData, setFormData] = useState({ title: '', memberName: '', time: '10:00', duration: '1 hr' });
 
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -28,8 +31,16 @@ const Agenda = () => {
         } catch (err) { console.error('Error fetching appointments:', err); }
     };
 
+    const fetchMembers = async () => {
+        try {
+            const data = await api.getMembers();
+            setAllMembers(data);
+        } catch (err) { console.error('Error fetching members:', err); }
+    };
+
     useEffect(() => {
         fetchAppointments();
+        fetchMembers();
     }, [selectedDate]);
 
     const handleSubmit = async (e) => {
@@ -48,6 +59,20 @@ const Agenda = () => {
         } catch (err) {
             console.error('Error saving appointment', err);
             alert('Hubo un error al guardar la cita. Inténtalo de nuevo.');
+        }
+    };
+
+    const handleLinkMember = async (aptId, member) => {
+        try {
+            await api.updateAppointment(aptId, {
+                member_id: member.id,
+                member_name: member.name
+            });
+            setShowLinkModal(null);
+            fetchAppointments();
+            alert(`Cita vinculada a ${member.name} con éxito.`);
+        } catch (err) {
+            alert('Error al vincular: ' + err.message);
         }
     };
 
@@ -167,18 +192,35 @@ const Agenda = () => {
                                         </div>
                                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
                                             <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{apt.duration}</span>
-                                            {apt.phone && (
-                                                <button 
-                                                    className="btn-ghost" 
-                                                    style={{ padding: '6px 12px', fontSize: '12px', color: '#25D366', background: 'rgba(37, 211, 102, 0.05)', borderRadius: '8px' }}
-                                                    onClick={() => {
-                                                        const msg = `Hola ${apt.memberName}, te escribimos de REP Calisthenics para recordarte tu clase de muestra el ${apt.date.split('T')[0]} a las ${apt.time}. ¡Confirmamos tu asistencia!`;
-                                                        window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
-                                                    }}
-                                                >
-                                                    <MessageCircle size={14} /> Recordar por WhatsApp
-                                                </button>
-                                            )}
+                                            
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                {!apt.member_id ? (
+                                                    <button 
+                                                        className="btn-ghost" 
+                                                        style={{ padding: '6px 12px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                                                        onClick={() => setShowLinkModal(apt)}
+                                                    >
+                                                        <User size={14} /> Vincular
+                                                    </button>
+                                                ) : (
+                                                    <span style={{ fontSize: '10px', color: 'var(--color-success)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <Check size={12} /> VINCULADO
+                                                    </span>
+                                                )}
+
+                                                {apt.phone && (
+                                                    <button 
+                                                        className="btn-ghost" 
+                                                        style={{ padding: '6px 12px', fontSize: '12px', color: '#25D366', background: 'rgba(37, 211, 102, 0.05)', borderRadius: '8px' }}
+                                                        onClick={() => {
+                                                            const msg = `Hola ${apt.memberName}, te escribimos de REP Calisthenics para recordarte tu clase de muestra el ${apt.date.split('T')[0]} a las ${apt.time}. ¡Confirmamos tu asistencia!`;
+                                                            window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                        }}
+                                                    >
+                                                        <MessageCircle size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -256,6 +298,43 @@ const Agenda = () => {
                     )}
                 </div>
             </div>
+
+            {showLinkModal && (
+                <div className="modal-overlay">
+                    <div className="glass-panel modal-content" style={{ maxWidth: '400px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <h2 style={{ fontSize: '20px' }}>Vincular a Miembro</h2>
+                            <button onClick={() => setShowLinkModal(null)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
+                        </div>
+                        <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="Buscar miembro por nombre..." 
+                            style={{ marginBottom: '20px' }}
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+                            {allMembers
+                                .filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(m => (
+                                    <button 
+                                        key={m.id} 
+                                        className="btn-ghost" 
+                                        style={{ justifyContent: 'flex-start', padding: '12px', border: '1px solid var(--color-glass-border)' }}
+                                        onClick={() => handleLinkMember(showLinkModal.id, m)}
+                                    >
+                                        <div style={{ textAlign: 'left' }}>
+                                            <p style={{ margin: 0, fontWeight: 'bold' }}>{m.name}</p>
+                                            <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)' }}>{m.phone || 'Sin teléfono'}</p>
+                                        </div>
+                                    </button>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

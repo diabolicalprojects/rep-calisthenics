@@ -90,20 +90,23 @@ function App() {
                     </Routes>
                 </main>
 
-                {/* Botón Flotante DEMO */}
+                {/* Botón Flotante WhatsApp / Soporte */}
                 <button
-                    onClick={() => setShowDemoModal(true)}
-                    className="demo-floating-btn pulse-animation"
+                    onClick={() => {
+                        const msg = "Hola! Necesito soporte técnico para el Control Panel de REP Calisthenics.";
+                        window.open(`https://wa.me/5214491245952?text=${encodeURIComponent(msg)}`, '_blank');
+                    }}
+                    className="whatsapp-floating-btn pulse-animation"
                     style={{
                         position: 'fixed',
                         bottom: '20px',
                         right: '20px',
                         zIndex: 9999,
-                        background: 'var(--color-accent-orange)',
-                        color: 'black',
+                        background: '#25D366',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '50px',
-                        padding: '10px 20px',
+                        padding: '12px 24px',
                         fontWeight: 'bold',
                         display: 'flex',
                         alignItems: 'center',
@@ -112,7 +115,7 @@ function App() {
                         cursor: 'pointer'
                     }}
                 >
-                    <Info size={18} /> DEMO
+                    <MessageCircle size={20} /> Soporte WhatsApp
                 </button>
 
                 {showDemoModal && (

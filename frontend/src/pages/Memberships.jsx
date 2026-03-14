@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { Plus, X, CreditCard, Edit2, Trash2, CheckCircle, Info } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Memberships = () => {
     const [plans, setPlans] = useState([]);
@@ -8,6 +8,7 @@ const Memberships = () => {
     const [editingPlan, setEditingPlan] = useState(null);
     const [formData, setFormData] = useState({ name: '', price: '', duration: '30', description: '' });
     const [loading, setLoading] = useState(true);
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
     const fetchPlans = async () => {
         setLoading(true);
@@ -38,8 +39,7 @@ const Memberships = () => {
             setShowModal(false);
             setEditingPlan(null);
             setFormData({ name: '', price: '', duration: '30', description: '' });
-            fetchPlans();
-            alert(editingPlan ? 'Plan actualizado correctamente' : 'Nuevo plan creado con éxito');
+            await fetchPlans(); // Ensure instant update
         } catch (err) { console.error('Error saving membership plan:', err); }
     };
 
@@ -54,11 +54,12 @@ const Memberships = () => {
         setShowModal(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm('¿Estás seguro de eliminar este plan? Esto no afectará a los miembros que ya lo tienen asignado, pero no podrá ser seleccionado nuevamente.')) return;
+    const handleDelete = async () => {
+        if (!confirmDelete.id) return;
         try {
-            await api.deleteMembership(id);
-            fetchPlans();
+            await api.deleteMembership(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null });
+            await fetchPlans(); // Ensure instant update
         } catch (err) { console.error('Error deleting plan:', err); }
     };
 
@@ -147,7 +148,7 @@ const Memberships = () => {
                                 <button className="btn-ghost" style={{ flex: 1, gap: '8px' }} onClick={() => handleEdit(plan)}>
                                     <Edit2 size={16} /> Editar
                                 </button>
-                                <button className="btn-ghost" style={{ flex: 1, gap: '8px', color: 'var(--color-danger)' }} onClick={() => handleDelete(plan.id)}>
+                                <button className="btn-ghost" style={{ flex: 1, gap: '8px', color: 'var(--color-danger)' }} onClick={() => setConfirmDelete({ open: true, id: plan.id })}>
                                     <Trash2 size={16} /> Eliminar
                                 </button>
                             </div>
@@ -155,6 +156,16 @@ const Memberships = () => {
                     </div>
                 ))}
             </div>
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Plan?"
+                message="Esta acción no afectará a los miembros que ya tienen este plan, pero no podrá ser seleccionado para nuevas inscripciones."
+                confirmText="Sí, Eliminar"
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                type="danger"
+            />
         </div>
     );
 };

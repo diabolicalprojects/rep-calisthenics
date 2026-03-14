@@ -1,33 +1,21 @@
 :root {
   --color-bg-main: #000000;
-  --color-bg-secondary: #111111;
-  --color-glass: rgba(255, 255, 255, 0.05);
-  --color-glass-border: rgba(255, 255, 255, 0.1);
-  --color-glass-hover: rgba(255, 255, 255, 0.1);
+  --color-bg-secondary: #0a0a0a;
+  --color-glass: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-glass-hover: rgba(255, 255, 255, 0.07);
   --color-accent-orange: #f48c25;
   --color-accent-orange-hover: #ff9e3b;
   --color-text-main: #ffffff;
-  --color-text-muted: #a0a0a0;
+  --color-text-muted: #888888;
   --color-success: #1fe074;
   --color-danger: #ff4d4f;
   --font-heading: 'Lexend', sans-serif;
   --font-body: 'Inter', sans-serif;
-  --color-card-bg: rgba(255, 255, 255, 0.03);
-  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme="light"] {
-  --color-bg-main: #f7f9fc;
-  --color-bg-secondary: #ffffff;
-  --color-glass: rgba(255, 255, 255, 0.85);
-  --color-glass-border: rgba(0, 0, 0, 0.10);
-  --color-glass-hover: rgba(0, 0, 0, 0.05);
-  --color-text-main: #1a1a1a;
-  --color-text-muted: #666666;
-  --color-card-bg: #ffffff;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --color-card-bg: rgba(255, 255, 255, 0.02);
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --color-accent-orange-glass: rgba(244, 140, 37, 0.1);
 }
 
 /* Custom Scrollbar */
@@ -258,6 +246,18 @@ svg {
   padding: 32px;
   margin: auto !important;
   flex-shrink: 0;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Fix for Select dropdown in Dark Mode */
+select.form-input option {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-main);
+}
+
+select.form-input {
+  cursor: pointer;
 }
 
 @media (max-width: 480px) {
@@ -269,6 +269,8 @@ svg {
     padding: 24px;
     background: #151515 !important;
     border-radius: 20px;
+    max-height: 95vh;
+    width: 95%;
   }
 }
 
@@ -569,29 +571,10 @@ p, span, h1, h2, h3, h4 {
   overflow-wrap: break-word;
 }
 
-/* Light mode: ensure btn-ghost text is readable */
-[data-theme="light"] .btn-ghost {
-  color: var(--color-text-main);
-  border-color: var(--color-glass-border);
+/* Text Protection */
+p, span, h1, h2, h3, h4 {
+  overflow-wrap: break-word;
 }
-
-[data-theme="light"] .form-input {
-  background: #ffffff;
-  color: #1a1a1a;
-}
-
-[data-theme="light"] .modal-content {
-  background: #ffffff !important;
-  border-color: rgba(0,0,0,0.12);
-}
-
-[data-theme="light"] .glass-panel {
-  background: rgba(255,255,255,0.85);
-  border-color: rgba(0,0,0,0.10);
-  backdrop-filter: blur(12px);
-}
-
-/* Animations */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }

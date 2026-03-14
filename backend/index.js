@@ -121,7 +121,19 @@ const initDB = async () => {
         }
       }
 
-      // 5. EXPENSES TABLE
+      // 5. EXPENSES CATEGORIES
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS expense_categories (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          name TEXT UNIQUE NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO expense_categories (name) VALUES 
+        ('Mantenimiento'), ('Servicios'), ('Sueldos'), ('Renta'), ('Limpieza'), ('Otros')
+        ON CONFLICT (name) DO NOTHING;
+      `);
+
+      // 6. EXPENSES TABLE
       await pool.query(`
         CREATE TABLE IF NOT EXISTS expenses (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -248,7 +260,7 @@ app.get('/api/public/appointments', async (req, res) => {
   try {
     if (!date) return res.status(400).json({ error: 'Date is required' });
     const result = await pool.query('SELECT time FROM appointments WHERE date = $1', [date]);
-    res.json(result.rows);
+    res.json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -375,8 +387,21 @@ app.post('/api/members', authenticateToken, async (req, res) => {
       'INSERT INTO members (name, email, phone, plan, status, expiration_date, signature_data, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
       [validated.name, validated.email, validated.phone, validated.plan, validated.status || 'Activo', validated.cutoffDate || null, signature || null, validated.joinDate || 'NOW()']
     );
-    res.status(201).json(result.rows[0]);
+
+    // Automated First Entry (Trigger visit record)
+    const newMember = result.rows[0];
+    await pool.query('INSERT INTO visits (member_id, member_name) VALUES ($1, $2)', [newMember.id, newMember.name]);
+    await pool.query('UPDATE members SET last_visit=NOW() WHERE id=$1', [newMember.id]);
+
+    // Welcome Notification
+    await pool.query(
+      'INSERT INTO notifications_log (member_id, member_name, type, message) VALUES ($1, $2, $3, $4)',
+      [newMember.id, newMember.name, 'welcome', `¡Bienvenido ${newMember.name}! Es un gusto tenerte en REP Calisthenics.`]
+    );
+
+    res.status(201).json(newMember);
   } catch (err) { 
+    console.error('Error creating member:', err);
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     res.status(500).json({ error: err.message }); 
   }
@@ -424,6 +449,13 @@ app.put('/api/inventory/:id', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('UPDATE inventory SET quantity=$1, last_update=NOW() WHERE id=$2 RETURNING *', [quantity, req.params.id]);
     res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/inventory/:id', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM inventory WHERE id = $1', [req.params.id]);
+    res.sendStatus(204);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -486,6 +518,20 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
     const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // Duplicate charge control for subscriptions
+    if (type === 'subscription' && items) {
+      const memberItem = items.find(i => i.member_id);
+      if (memberItem && memberItem.member_id) {
+        const dupCheck = await client.query(
+          "SELECT id FROM payments WHERE member_id = $1 AND concept = 'Renovación de Membresía' AND date >= CURRENT_DATE",
+          [memberItem.member_id]
+        );
+        if (dupCheck.rows.length > 0) {
+          throw new Error('Este miembro ya realizó un pago de suscripción hoy.');
+        }
+      }
+    }
     
     // Register transaction
     const txResult = await client.query(
@@ -493,15 +539,33 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
       [total_amount, payment_method, cashier_name, JSON.stringify(items), type]
     );
 
+    // Sync with Payments History (Accounting)
+    // Find if there's a member_id in items (for membership sales)
+    const memberItem = items.find(i => i.member_id);
+    const memberId = memberItem ? memberItem.member_id : null;
+    const memberName = memberItem ? memberItem.member_name : (type === 'subscription' ? 'Socio' : 'Cliente General');
+
+    await client.query(
+      'INSERT INTO payments (member_name, member_id, concept, amount, status, date) VALUES ($1, $2, $3, $4, $5, NOW())',
+      [memberName, memberId, type === 'subscription' ? 'Renovación de Membresía' : 'Venta POS', total_amount, 'Pagado']
+    );
+
+    // Update member status and expiration if subscription
+    if (type === 'subscription' && memberId) {
+      await client.query(
+        "UPDATE members SET status = 'Activo', expiration_date = CURRENT_DATE + INTERVAL '30 days' WHERE id = $1",
+        [memberId]
+      );
+    }
+
     // Decrement inventory if applicable
     if (items && Array.isArray(items)) {
       for (const item of items) {
         if (item.type === 'retail' || (!item.type && item.id)) {
-           // We assume item.id is valid for inventory. We use a partial name match or id if provided
-           // The POS currently sends item object from inventory, so it has id
+           const qtyToSubtract = item.quantity || 1;
            await client.query(
-             'UPDATE inventory SET quantity = quantity - 1 WHERE id = $1 AND quantity > 0',
-             [item.id]
+             'UPDATE inventory SET quantity = quantity - $1 WHERE id = $2 AND quantity >= $1',
+             [qtyToSubtract, item.id]
            );
         }
       }
@@ -511,7 +575,7 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
     res.status(201).json(txResult.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    throw err;
   } finally {
     client.release();
   }
@@ -540,15 +604,54 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
 app.post('/api/expenses', authenticateToken, async (req, res) => {
   try {
     const validated = ExpenseSchema.parse(req.body);
+    // Ensure recorded_by is a valid UUID or fallback to the current user's ID
+    const recordedBy = validated.recorded_by && validated.recorded_by.length === 36 ? validated.recorded_by : req.user.id;
+    
+    // Auto-save category to categories table if it's new
+    if (validated.category) {
+      await pool.query(
+        'INSERT INTO expense_categories (name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+        [validated.category]
+      );
+    }
+
     const result = await pool.query(
       'INSERT INTO expenses (description, amount, category, recorded_by) VALUES ($1, $2, $3, $4) RETURNING *',
-      [validated.description, validated.amount, validated.category, validated.recorded_by || 'Admin']
+      [validated.description, validated.amount, validated.category, recordedBy]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) { 
+    console.error('Error creating expense:', err);
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     res.status(500).json({ error: err.message }); 
   }
+});
+
+// --- EXPENSE CATEGORIES ---
+app.get('/api/expenses/categories', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM expense_categories ORDER BY name ASC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/expenses/categories', authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nombre es requerido' });
+    const result = await pool.query(
+      'INSERT INTO expense_categories (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING *',
+      [name]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/expenses/categories/:id', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM expense_categories WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Categoría eliminada' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // --- PAYMENTS (Accounting) ---
@@ -589,12 +692,18 @@ app.get('/api/visits', authenticateToken, async (req, res) => {
 app.post('/api/visits', authenticateToken, async (req, res) => {
   const { member_id, member_name } = req.body;
   try {
-    await pool.query('INSERT INTO visits (member_id, member_name) VALUES ($1, $2)', [member_id, member_name]);
-    if (member_id) {
-      await pool.query('UPDATE members SET last_visit=NOW() WHERE id=$1', [member_id]);
+    // Validate UUID format for member_id if provided
+    const validMemberId = (member_id && member_id.length === 36) ? member_id : null;
+    
+    await pool.query('INSERT INTO visits (member_id, member_name) VALUES ($1, $2)', [validMemberId, member_name]);
+    if (validMemberId) {
+      await pool.query('UPDATE members SET last_visit=NOW() WHERE id=$1', [validMemberId]);
     }
     res.sendStatus(201);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error('Error recording visit:', err);
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 // --- APPOINTMENTS ---
@@ -628,6 +737,21 @@ app.put('/api/appointments/:id/status', authenticateToken, async (req, res) => {
   const { status } = req.body;
   try {
     await pool.query('UPDATE appointments SET status=$1 WHERE id=$2', [status, req.params.id]);
+    res.sendStatus(204);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/appointments/:id', authenticateToken, async (req, res) => {
+  const fields = req.body;
+  if (Object.keys(fields).length === 0) return res.status(400).json({ error: 'No hay campos para actualizar' });
+  
+  try {
+    const keys = Object.keys(fields);
+    const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+    const params = Object.values(fields);
+    params.push(req.params.id);
+    
+    await pool.query(`UPDATE appointments SET ${setClause} WHERE id = $${params.length}`, params);
     res.sendStatus(204);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -718,6 +842,16 @@ const checkExpirations = async () => {
     console.error('❌ Error en Diabolical Engine:', err.message);
   }
 };
+
+app.post('/api/notifications/check-expirations', authenticateToken, async (req, res) => {
+  await checkExpirations();
+  res.json({ message: 'Verificación de expiraciones completada y logs de notificación generados.' });
+});
+
+// Run every 24 hours
+setInterval(checkExpirations, 24 * 60 * 60 * 1000);
+// Also run on start
+setTimeout(checkExpirations, 5000);
 
 // --- HEALTH CHECK ---
 app.get('/api/health', (req, res) => {

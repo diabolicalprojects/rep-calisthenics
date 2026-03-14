@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 import OnboardingModal from '../components/OnboardingModal';
 import ModuleMetricBar from '../components/ModuleMetricBar';
+import ConfirmModal from '../components/ConfirmModal';
 
 /* ── helper ──────────────────────────────────────── */
 const statusColor = (s) => s === 'Activo' ? 'var(--color-success)' : 'var(--color-danger)';
@@ -262,20 +263,24 @@ const MemberCard = ({ member, onClick }) => {
 const Members = () => {
     const [members, setMembers] = useState([]);
     const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showOnboardingModal, setShowOnboardingModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingMember, setEditingMember] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
-    const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
     const [search, setSearch] = useState('');
     const [filterStatus, setFilterStatus] = useState('Todos');
+    const [viewMode, setViewMode] = useState('grid');
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', plan: '', status: 'Activo' });
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
     const fetchMembers = async () => {
+        setLoading(true);
         try {
             const data = await api.getMembers();
             setMembers(data);
         } catch (err) { console.error(err); }
+        finally { setLoading(false); }
     };
 
     const fetchPlans = async () => {
@@ -286,7 +291,10 @@ const Members = () => {
         } catch (err) { console.error(err); }
     };
 
-    useEffect(() => { fetchMembers(); fetchPlans(); }, []);
+    useEffect(() => {
+        fetchMembers();
+        fetchPlans();
+    }, []);
 
     const filtered = members.filter(m => {
         const matchSearch = m.name?.toLowerCase().includes(search.toLowerCase()) || m.email?.toLowerCase().includes(search.toLowerCase());
@@ -296,17 +304,24 @@ const Members = () => {
 
     const handleEdit = (member) => {
         setEditingMember(member);
-        setFormData({ name: member.name, email: member.email, phone: member.phone || '', plan: member.plan, status: member.status });
+        setFormData({
+            name: member.name,
+            email: member.email,
+            phone: member.phone || '',
+            plan: member.plan,
+            status: member.status
+        });
         setSelectedMember(null);
         setShowEditModal(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm('¿Eliminar este miembro? Esta acción no se puede deshacer.')) return;
+    const handleDelete = async () => {
+        if (!confirmDelete.id) return;
         try {
-            // Mock delete for now as API doesn't have it yet, or add it to api.js
-            // await api.deleteMember(id); 
-            alert('Función de eliminar deshabilitada temporalmente por seguridad.');
+            await api.deleteMember(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null });
+            setSelectedMember(null);
+            await fetchMembers();
         } catch (err) { console.error(err); }
     };
 
@@ -316,7 +331,7 @@ const Members = () => {
             await api.updateMember(editingMember.id, formData);
             setShowEditModal(false);
             setEditingMember(null);
-            fetchMembers();
+            await fetchMembers();
         } catch (err) { console.error(err); }
     };
 
@@ -394,7 +409,7 @@ const Members = () => {
                     plans={plans}
                     onClose={() => setSelectedMember(null)}
                     onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    onDelete={(id) => setConfirmDelete({ open: true, id })}
                 />
             )}
 
@@ -407,13 +422,10 @@ const Members = () => {
 
             {/* TOOLBAR */}
             <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-                {/* Search */}
                 <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
                     <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
                     <input type="text" className="form-input" placeholder="Buscar por nombre o email…" style={{ paddingLeft: 42 }} value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
-
-                {/* Status filter */}
                 {['Todos', 'Activo', 'Inactivo'].map(f => (
                     <button key={f} className={filterStatus === f ? 'btn-primary' : 'btn-ghost'}
                         style={{ padding: '8px 16px', minHeight: 40, fontSize: 13 }}
@@ -421,8 +433,6 @@ const Members = () => {
                         {f}
                     </button>
                 ))}
-
-                {/* View toggle */}
                 <div style={{ display: 'flex', border: '1px solid var(--color-glass-border)', borderRadius: 8, overflow: 'hidden' }}>
                     <button onClick={() => setViewMode('list')} style={{ padding: '8px 12px', background: viewMode === 'list' ? 'var(--color-accent-orange)' : 'transparent', border: 'none', cursor: 'pointer', color: viewMode === 'list' ? '#fff' : 'var(--color-text-muted)', transition: 'all 0.2s' }}>
                         <List size={16} />
@@ -436,9 +446,7 @@ const Members = () => {
             {/* GRID VIEW */}
             {viewMode === 'grid' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-                    {filtered.length === 0 && (
-                        <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--color-text-muted)', padding: '40px 0' }}>Sin resultados</p>
-                    )}
+                    {filtered.length === 0 && <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--color-text-muted)', padding: '40px 0' }}>Sin resultados</p>}
                     {filtered.map(m => (
                         <MemberCard key={m.id} member={m} onClick={() => setSelectedMember(m)} />
                     ))}
@@ -486,7 +494,7 @@ const Members = () => {
                                                 <button className="btn-ghost" style={{ padding: 5 }} title="Editar" onClick={() => handleEdit(m)}>
                                                     <Edit2 size={15} color="var(--color-text-muted)" />
                                                 </button>
-                                                <button className="btn-ghost" style={{ padding: 5 }} title="Eliminar" onClick={() => handleDelete(m.id)}>
+                                                <button className="btn-ghost" style={{ padding: 5 }} title="Eliminar" onClick={() => setConfirmDelete({ open: true, id: m.id })}>
                                                     <Trash2 size={15} color="var(--color-danger)" />
                                                 </button>
                                             </div>
@@ -498,6 +506,16 @@ const Members = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Miembro?"
+                message="Esta acción eliminará permanentemente al miembro y sus registros históricos de acceso. Esta acción no se puede revertir."
+                confirmText="No se puede deshacer"
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                type="danger"
+            />
         </div>
     );
 };

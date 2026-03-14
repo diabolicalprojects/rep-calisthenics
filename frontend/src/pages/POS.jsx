@@ -84,15 +84,26 @@ const POS = () => {
     };
 
     const addToCart = (item, type = 'retail') => {
-        // If type is not retail, we might just replace the cart or add it
-        setCart([...cart, { ...item, type, cartId: Date.now() + Math.random() }]);
+        setCart(prevCart => {
+            const existingItemIndex = prevCart.findIndex(i => i.id === item.id && i.type === type && type !== 'sub');
+            if (existingItemIndex > -1) {
+                const newCart = [...prevCart];
+                newCart[existingItemIndex] = {
+                    ...newCart[existingItemIndex],
+                    quantity: (newCart[existingItemIndex].quantity || 1) + 1,
+                    totalPrice: (newCart[existingItemIndex].quantity + 1) * (Number(item.price) || 0)
+                };
+                return newCart;
+            }
+            return [...prevCart, { ...item, type, quantity: 1, totalPrice: Number(item.price) || 0, cartId: Date.now() + Math.random() }];
+        });
     };
 
     const removeFromCart = (cartId) => {
         setCart(cart.filter(item => item.cartId !== cartId));
     };
 
-    const cartTotal = cart.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
+    const cartTotal = cart.reduce((acc, item) => acc + (Number(item.totalPrice) || 0), 0);
 
     const handleCheckout = async () => {
         if (cart.length === 0) return;
@@ -108,16 +119,6 @@ const POS = () => {
             };
 
             const savedTx = await api.createTransaction(transactionData);
-
-            // Update stocks in serial for simplicity
-            for (let item of cart) {
-                if (item.type === 'retail' && item.id) {
-                    await api.updateStock(item.id, Math.max((item.quantity || 0) - 1, 0));
-                }
-                if (item.type === 'sub') {
-                    // In a real scenario, we would trigger visit or update member expiration here
-                }
-            }
 
             // Update local cash register state for display (assuming API handles backend update)
             setCashRegister(prev => ({
@@ -245,16 +246,28 @@ const POS = () => {
                             .map(m => {
                                 const mPlan = memberships.find(p => p.name === m.plan);
                                 const price = mPlan ? mPlan.price : 0;
+                                const isExpiringSoon = m.expiration_date && (new Date(m.expiration_date) - new Date()) / (1000 * 60 * 60 * 24) < 5;
+                                const isExpired = m.expiration_date && new Date(m.expiration_date) < new Date();
+                                
                                 return (
-                                    <div key={m.id} className="glass-panel glass-hover" style={{ padding: '15px', cursor: 'pointer' }} onClick={() => addToCart({ name: `Mensualidad: ${m.name}`, price, plan: m.plan }, 'sub')}>
+                                    <div key={m.id} className="glass-panel glass-hover" style={{ padding: '15px', cursor: 'pointer', border: isExpiringSoon ? '1px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)' }} 
+                                        onClick={() => {
+                                            if (!isExpired && !isExpiringSoon && m.expiration_date) {
+                                                if (!confirm(`El socio ${m.name} tiene membresía vigente hasta el ${new Date(m.expiration_date).toLocaleDateString()}. ¿Deseas cobrar de todas formas?`)) return;
+                                            }
+                                            addToCart({ id: m.id, name: `Mensualidad: ${m.name}`, price, plan: m.plan, member_id: m.id, member_name: m.name }, 'sub');
+                                        }}>
                                         <div style={{ fontWeight: 'bold' }}>{m.name}</div>
-                                        <div style={{ fontSize: '13px', color: 'var(--color-accent-orange)' }}>Plan: {m.plan} (${price})</div>
+                                        <div style={{ fontSize: '13px', color: isExpired ? 'var(--color-danger)' : (isExpiringSoon ? 'var(--color-accent-orange)' : 'var(--color-success)') }}>
+                                            {m.expiration_date ? `Vence: ${new Date(m.expiration_date).toLocaleDateString()}` : 'Sin membresía'}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Plan actual: {m.plan}</div>
                                     </div>
                                 );
                             })}
 
                         {activeTab === 'visits' && (
-                            <div className="glass-panel glass-hover" style={{ padding: '20px', cursor: 'pointer', textAlign: 'center' }} onClick={() => addToCart({ name: 'Visita Diaria', price: 100 }, 'visit')}>
+                            <div className="glass-panel glass-hover" style={{ padding: '20px', cursor: 'pointer', textAlign: 'center' }} onClick={() => addToCart({ id: 'daily-visit', name: 'Visita Diaria', price: 100 }, 'visit')}>
                                 <Ticket size={40} style={{ color: 'var(--color-accent-orange)', margin: '0 auto 10px auto' }} />
                                 <div style={{ fontWeight: 'bold', fontSize: '16px' }}>Visita Única (Pase de Día)</div>
                                 <div style={{ color: 'var(--color-success)', fontWeight: 'bold', fontSize: '20px', marginTop: '10px' }}>$100</div>
@@ -277,11 +290,11 @@ const POS = () => {
                         ) : cart.map((item) => (
                             <div key={item.cartId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '10px' }}>
                                 <div>
-                                    <div style={{ fontWeight: '500', fontSize: '14px' }}>{item.name}</div>
+                                    <div style={{ fontWeight: '500', fontSize: '14px' }}>{item.quantity > 1 ? `${item.quantity}x ` : ''}{item.name}</div>
                                     <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{item.type.toUpperCase()}</div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                    <span style={{ fontWeight: 'bold' }}>${item.price}</span>
+                                    <span style={{ fontWeight: 'bold' }}>${item.totalPrice}</span>
                                     <button onClick={() => removeFromCart(item.cartId)} style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer', padding: '5px' }}>
                                         <X size={16} />
                                     </button>
@@ -291,17 +304,24 @@ const POS = () => {
                     </div>
 
                     <div style={{ padding: '20px', borderTop: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '22px', fontWeight: 'bold' }}>
+                        <div className="form-group" style={{ marginBottom: '15px' }}>
+                            <label style={{ fontSize: '12px', marginBottom: '8px' }}>Método de Pago</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <button className={`btn-ghost ${paymentMethod === 'cash' ? 'active-tab' : ''}`} style={{ padding: '8px', fontSize: '12px' }} onClick={() => setPaymentMethod('cash')}>Efectivo</button>
+                                <button className={`btn-ghost ${paymentMethod === 'card' ? 'active-tab' : ''}`} style={{ padding: '8px', fontSize: '12px' }} onClick={() => setPaymentMethod('card')}>Tarjeta</button>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', fontSize: '20px', fontWeight: 'bold' }}>
                             <span>Total</span>
                             <span style={{ color: 'var(--color-success)' }}>${cartTotal}</span>
                         </div>
                         <button
                             className="btn-primary"
-                            style={{ width: '100%', justifyContent: 'center', padding: '15px', fontSize: '16px' }}
+                            style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '15px' }}
                             disabled={cart.length === 0}
                             onClick={handleCheckout}
                         >
-                            Completar Pago <ArrowRight size={18} />
+                            Cerrar Transacción <ArrowRight size={18} />
                         </button>
                     </div>
                 </div>
@@ -321,24 +341,24 @@ const POS = () => {
                                 <div style={{ fontSize: 10, color: '#666' }}>RFC: GAMA900101-XXX</div>
                                 <div style={{ fontSize: 10, color: '#666' }}>Recinto Deportivo Profesional</div>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 11 }}>
-                                <span>Ticket:</span> <span>#{showReceipt.id.substring(0, 8).toUpperCase()}</span>
+                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 11 }}>
+                                <span>Ticket:</span> <span>#{showReceipt.id?.substring(0, 8).toUpperCase() || 'TEMP'}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: 11 }}>
-                                <span>Cajero:</span> <span>{showReceipt.cashier}</span>
+                                <span>Cajero:</span> <span>{showReceipt.cashier_name}</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #aaa', paddingBottom: '10px', marginBottom: '12px', fontSize: 11 }}>
                                 <span>Fecha:</span> <span>{showReceipt.timestamp.toLocaleString()}</span>
                             </div>
                             {showReceipt.items.map(i => (
                                 <div key={i.cartId} style={{ display: 'flex', justifyContent: 'space-between', margin: '6px 0', fontSize: 12 }}>
-                                    <span style={{ maxWidth: '70%' }}>1x {i.name}</span>
-                                    <span>${i.price}</span>
+                                    <span style={{ maxWidth: '70%' }}>{i.quantity > 1 ? `${i.quantity}x ` : '1x '} {i.name}</span>
+                                    <span>${i.totalPrice}</span>
                                 </div>
                             ))}
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #333', paddingTop: '12px', marginTop: '12px', fontWeight: 'bold', fontSize: '20px' }}>
                                 <span>TOTAL</span>
-                                <span>${showReceipt.totalAmount}</span>
+                                <span>${showReceipt.total_amount}</span>
                             </div>
                             <div style={{ textAlign: 'center', marginTop: 20, fontSize: 9, color: '#999' }}>
                                 GRACIAS POR ENTRENAR CON NOSOTROS
@@ -350,7 +370,7 @@ const POS = () => {
                                 Imprimir / PDF
                             </button>
                             <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowReceipt(null)}>
-                                Nuevo Cliente
+                                Nueva Venta
                             </button>
                         </div>
                     </div>

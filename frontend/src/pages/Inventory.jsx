@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
 import { Plus, X, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
 import ModuleMetricBar from '../components/ModuleMetricBar';
+import ConfirmModal from '../components/ConfirmModal';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 const Inventory = () => {
     const [items, setItems] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', category: 'Bebidas', quantity: '', price: '' });
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
     const fetchInventory = async () => {
         try {
@@ -35,7 +36,7 @@ const Inventory = () => {
             });
             setShowModal(false);
             setFormData({ name: '', category: 'Bebidas', quantity: '', price: '' });
-            fetchInventory();
+            await fetchInventory();
         } catch (err) { console.error('Error saving item:', err); }
     };
 
@@ -43,20 +44,18 @@ const Inventory = () => {
         const newQty = currentQty + amount;
         if (newQty < 0) return;
 
-        let status = 'Disponible';
-        if (newQty <= 0) status = 'Agotado';
-        else if (newQty <= 5) status = 'Poco Stock';
-
         try {
-            await api.updateStock(id, newQty); // Note: updateStock in api.js needs to handle this
-            fetchInventory();
+            await api.updateStock(id, newQty);
+            await fetchInventory();
         } catch (err) { console.error('Error updating stock', err); }
     };
 
-    const deleteItem = async (id) => {
-        if (!confirm('¿Estás seguro de eliminar este producto del inventario?')) return;
+    const deleteItem = async () => {
+        if (!confirmDelete.id) return;
         try {
-            alert('Función de eliminar deshabilitada temporalmente.');
+            await api.deleteInventoryItem(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null });
+            await fetchInventory();
         } catch (err) { console.error('Error deleting item', err); }
     };
 
@@ -237,7 +236,7 @@ const Inventory = () => {
                                             <button className="btn-ghost" style={{ padding: '4px', display: 'flex', alignItems: 'center' }} title="Disminuir" onClick={() => updateQuantity(item.id, item.quantity, -1)}>
                                                 <TrendingDown size={16} color="var(--color-danger)" />
                                             </button>
-                                            <button className="btn-ghost" style={{ padding: '4px', display: 'flex', alignItems: 'center', marginLeft: '8px' }} onClick={() => deleteItem(item.id)} title="Eliminar">
+                                            <button className="btn-ghost" style={{ padding: '4px', display: 'flex', alignItems: 'center', marginLeft: '8px' }} onClick={() => setConfirmDelete({ open: true, id: item.id })} title="Eliminar">
                                                 <X size={16} color="var(--color-text-muted)" />
                                             </button>
                                         </div>
@@ -248,6 +247,16 @@ const Inventory = () => {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Producto?"
+                message="Esta acción eliminará el producto del inventario permanentemente. Las transacciones pasadas que incluyan este producto no se verán afectadas."
+                confirmText="Eliminar permanentemente"
+                onConfirm={deleteItem}
+                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                type="danger"
+            />
         </div>
     );
 };

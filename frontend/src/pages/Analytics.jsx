@@ -100,18 +100,20 @@ const Analytics = () => {
                 }
             });
 
-            /* TRANSACTIONS */
+            /* PAYMENTS (Accounting) */
             let revenue = 0, txCount = 0;
             const revByMonth = {};
             try {
-                const transactions = await api.getTransactions();
-                transactions.forEach(data => {
-                    const amt = parseFloat(data.total_amount) || 0;
-                    revenue += amt;
-                    txCount++;
-                    const ts = new Date(data.timestamp || Date.now());
-                    const key = ts.toLocaleString('es', { month: 'short' });
-                    revByMonth[key] = (revByMonth[key] || 0) + amt;
+                const payments = await api.getPayments();
+                payments.forEach(data => {
+                    if (data.status === 'Pagado') {
+                        const amt = parseFloat(data.amount) || 0;
+                        revenue += amt;
+                        txCount++;
+                        const ts = new Date(data.date || Date.now());
+                        const key = ts.toLocaleString('es', { month: 'short' });
+                        revByMonth[key] = (revByMonth[key] || 0) + amt;
+                    }
                 });
             } catch (e) { }
             setRevenueData(months.map(m => ({ month: m.month, ingresos: revByMonth[m.month] || 0 })));

@@ -70,6 +70,10 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify({ quantity })
   }).then(handleResponse),
+  deleteInventoryItem: (id) => fetch(`${API_URL}/inventory/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
 
   // APPOINTMENTS
   getAppointments: (date) => fetch(`${API_URL}/appointments${date ? `?date=${date}` : ''}`, { headers: getAuthHeaders() }).then(handleResponse),
@@ -82,6 +86,11 @@ export const api = {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify({ status })
+  }).then(handleResponse),
+  updateAppointment: (id, data) => fetch(`${API_URL}/appointments/${id}`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
   }).then(handleResponse),
 
   // PAYMENTS (Accounting)
@@ -158,6 +167,18 @@ export const api = {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  // EXPENSE CATEGORIES
+  getExpenseCategories: () => fetch(`${API_URL}/expenses/categories`, { headers: getAuthHeaders() }).then(handleResponse),
+  createExpenseCategory: (name) => fetch(`${API_URL}/expenses/categories`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ name })
+  }).then(handleResponse),
+  deleteExpenseCategory: (id) => fetch(`${API_URL}/expenses/categories/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
   }).then(handleResponse),
   
   // NOTIFICATIONS

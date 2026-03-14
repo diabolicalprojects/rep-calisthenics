@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Plus, X, Edit, Trash2, Key, KeyRound } from 'lucide-react';
 import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
     const [formData, setFormData] = useState({
         name: '', username: '', email: '', password: '', role: 'coach',
         permissions: { members: false, pos: false, agenda: false }
@@ -46,26 +48,24 @@ const Users = () => {
                 const payload = { ...formData };
                 if (!payload.password) delete payload.password;
                 await api.updateUser(editingUser.id, payload);
-                alert('Usuario actualizado!');
             } else {
                 await api.addUser(formData);
-                alert('Usuario creado con éxito!');
             }
             setShowModal(false);
             setEditingUser(null);
-            fetchUsers();
+            await fetchUsers();
         } catch (err) {
             console.error('Error saving user:', err);
             alert('Error al guardar el usuario: ' + err.message);
         }
     };
 
-    const handleDelete = async (userId) => {
-        if (!window.confirm('¿Seguro que deseas eliminar a este usuario?')) return;
+    const handleDelete = async () => {
+        if (!confirmDelete.id) return;
         try {
-            await api.deleteUser(userId);
-            alert('Usuario eliminado');
-            fetchUsers();
+            await api.deleteUser(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null });
+            await fetchUsers();
         } catch (err) {
             alert('Error eliminando usuario: ' + err.message);
         }
@@ -205,7 +205,7 @@ const Users = () => {
                                             <button 
                                                 className="btn-ghost" 
                                                 style={{ color: 'var(--color-danger)', padding: '5px' }} 
-                                                onClick={() => handleDelete(u.id)}
+                                                onClick={() => setConfirmDelete({ open: true, id: u.id })}
                                                 disabled={(!isDev && u.role === 'developer') || u.id === userObj.id}
                                             >
                                                 <Trash2 size={16} />
@@ -218,6 +218,16 @@ const Users = () => {
                     </table>
                 </div>
             </div>
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Usuario?"
+                message="Esta acción revocará permanentemente el acceso de este usuario al sistema. Esta acción no se puede deshacer."
+                confirmText="Eliminar acceso"
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                type="danger"
+            />
         </div>
     );
 };

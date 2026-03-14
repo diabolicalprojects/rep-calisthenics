@@ -1,31 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, ArrowDownCircle, Wallet, Calendar, PieChart } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showCatModal, setShowCatModal] = useState(false);
     const [stats, setStats] = useState({ totalMonthly: 0, byCategory: {} });
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null, name: '' });
     const [formData, setFormData] = useState({
         description: '',
         amount: '',
-        category: 'Mantenimiento',
+        category: '',
+        customCategory: '',
         date: new Date().toISOString().split('T')[0]
     });
+    const [newCatName, setNewCatName] = useState('');
 
     const userObj = JSON.parse(localStorage.getItem('user') || '{}');
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await api.getExpenses();
-            setExpenses(data);
+            const [expensesData, catsData] = await Promise.all([
+                api.getExpenses(),
+                api.getExpenseCategories()
+            ]);
             
+            setExpenses(expensesData);
+            setCategories(catsData);
+            
+            if (catsData.length > 0 && !formData.category) {
+                setFormData(prev => ({ ...prev, category: catsData[0].name }));
+            }
+
             // Calculate stats
             let total = 0;
             const cats = {};
-            data.forEach(ex => {
+            expensesData.forEach(ex => {
                 const amt = parseFloat(ex.amount) || 0;
                 total += amt;
                 cats[ex.category] = (cats[ex.category] || 0) + amt;
@@ -45,20 +60,53 @@ const Expenses = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const finalCategory = formData.category === 'Personalizada' ? formData.customCategory : formData.category;
+            
+            if (!finalCategory) {
+                throw new Error('La categoría es requerida');
+            }
+
             await api.createExpense({
-                ...formData,
+                description: formData.description,
+                amount: parseFloat(formData.amount),
+                category: finalCategory,
+                date: formData.date,
                 recorded_by: userObj.id
             });
+            
             setShowModal(false);
             setFormData({
                 description: '',
                 amount: '',
-                category: 'Mantenimiento',
+                category: categories[0]?.name || '',
+                customCategory: '',
                 date: new Date().toISOString().split('T')[0]
             });
-            fetchData();
+            await fetchData();
         } catch (err) {
             alert('Error al guardar gasto: ' + err.message);
+        }
+    };
+
+    const handleAddCategory = async (e) => {
+        e.preventDefault();
+        try {
+            await api.createExpenseCategory(newCatName);
+            setNewCatName('');
+            await fetchData();
+        } catch (err) {
+            alert('Error al crear categoría: ' + err.message);
+        }
+    };
+
+    const handleDeleteCategory = async () => {
+        if (!confirmDelete.id) return;
+        try {
+            await api.deleteExpenseCategory(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null, name: '' });
+            await fetchData();
+        } catch (err) {
+            alert('Error al eliminar categoría: ' + err.message);
         }
     };
 
@@ -69,9 +117,14 @@ const Expenses = () => {
                     <h1 className="page-title">Gastos y Egresos</h1>
                     <p className="page-subtitle text-muted">Control de salidas de capital y costos operativos</p>
                 </div>
-                <button className="btn-primary" style={{ background: 'var(--color-danger)', border: 'none' }} onClick={() => setShowModal(true)}>
-                    <Plus size={18} /> Registrar Gasto
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button className="btn-ghost" onClick={() => setShowCatModal(true)}>
+                        Gestionar Categorías
+                    </button>
+                    <button className="btn-primary" style={{ background: 'var(--color-danger)', border: 'none' }} onClick={() => setShowModal(true)}>
+                        <Plus size={18} /> Registrar Gasto
+                    </button>
+                </div>
             </header>
 
             {/* Metrics Row */}
@@ -90,7 +143,7 @@ const Expenses = () => {
                         <h3>Distribución por Categoría</h3>
                         <div className="icon-wrapper blue"><PieChart size={20} /></div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
                         {Object.entries(stats.byCategory).length === 0 ? (
                             <p className="text-muted">No hay gastos registrados aún</p>
                         ) : Object.entries(stats.byCategory).map(([cat, amt]) => (
@@ -131,7 +184,47 @@ const Expenses = () => {
                 </div>
             </div>
 
-            {/* Insert Modal */}
+            {/* Category Management Modal */}
+            {showCatModal && (
+                <div className="modal-overlay">
+                    <div className="glass-panel modal-content" style={{ maxWidth: '400px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                            <h2 style={{ fontSize: '20px' }}>Gestionar Categorías</h2>
+                            <button onClick={() => setShowCatModal(false)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
+                        </div>
+                        
+                        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                            <input 
+                                required 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Nueva categoría..." 
+                                value={newCatName} 
+                                onChange={e => setNewCatName(e.target.value)} 
+                            />
+                            <button type="submit" className="btn-primary" style={{ padding: '0 15px' }}>
+                                <Plus size={18} />
+                            </button>
+                        </form>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+                            {categories.map(cat => (
+                                <div key={cat.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-glass)', padding: '10px 15px', borderRadius: '10px' }}>
+                                    <span>{cat.name}</span>
+                                    <button 
+                                        onClick={() => setConfirmDelete({ open: true, id: cat.id, name: cat.name })}
+                                        style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Insert Gasto Modal */}
             {showModal && (
                 <div className="modal-overlay">
                     <div className="glass-panel modal-content" style={{ maxWidth: '450px' }}>
@@ -151,16 +244,33 @@ const Expenses = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Categoría</label>
-                                    <select className="form-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                                        <option value="Mantenimiento">Mantenimiento</option>
-                                        <option value="Servicios">Servicios (Luz/Agua)</option>
-                                        <option value="Sueldos">Sueldos</option>
-                                        <option value="Renta">Renta</option>
-                                        <option value="Limpieza">Limpieza</option>
-                                        <option value="Otros">Otros</option>
+                                    <select 
+                                        className="form-input" 
+                                        value={formData.category} 
+                                        onChange={e => setFormData({...formData, category: e.target.value})}
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))}
+                                        <option value="Personalizada">+ Personalizada</option>
                                     </select>
                                 </div>
                             </div>
+
+                            {formData.category === 'Personalizada' && (
+                                <div className="form-group animate-fade-in">
+                                    <label>Nombre de Categoría Nueva</label>
+                                    <input 
+                                        required 
+                                        type="text" 
+                                        className="form-input" 
+                                        placeholder="Ej. Marketing Digital" 
+                                        value={formData.customCategory} 
+                                        onChange={e => setFormData({...formData, customCategory: e.target.value})} 
+                                    />
+                                </div>
+                            )}
+
                             <div className="form-group">
                                 <label>Fecha</label>
                                 <input type="date" className="form-input" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
@@ -172,6 +282,16 @@ const Expenses = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Categoría?"
+                message={`¿Eliminar la categoría "${confirmDelete.name}"? Los gastos existentes no se borrarán pero no se podrán agrupar por esta categoría en nuevas entradas.`}
+                confirmText="Eliminar Categoría"
+                onConfirm={handleDeleteCategory}
+                onCancel={() => setConfirmDelete({ open: false, id: null, name: '' })}
+                type="danger"
+            />
         </div>
     );
 };

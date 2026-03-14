@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Play, Edit2 } from 'lucide-react';
 import { api } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Routines = () => {
     const [routines, setRoutines] = useState([]);
@@ -9,6 +10,7 @@ const Routines = () => {
     const [selectedRoutine, setSelectedRoutine] = useState(null);
     const [members, setMembers] = useState([]);
     const [editingId, setEditingId] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
     const [formData, setFormData] = useState({ name: '', level: 'Principiante', focus: '', icon: '🔰', description: '' });
 
     const fetchRoutines = async () => {
@@ -41,7 +43,7 @@ const Routines = () => {
             setShowModal(false);
             setEditingId(null);
             setFormData({ name: '', level: 'Principiante', focus: '', icon: '🔥', description: '' });
-            fetchRoutines();
+            await fetchRoutines();
         } catch (err) { console.error('Error saving routine:', err); }
     };
 
@@ -57,14 +59,14 @@ const Routines = () => {
         setShowModal(true);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Eliminar esta rutina?')) {
-            try {
-                await api.deleteRoutine(id);
-                setShowModal(false);
-                fetchRoutines();
-            } catch (err) { console.error('Error deleting routine:', err); }
-        }
+    const handleDelete = async () => {
+        if (!confirmDelete.id) return;
+        try {
+            await api.deleteRoutine(confirmDelete.id);
+            setConfirmDelete({ open: false, id: null });
+            setShowModal(false);
+            await fetchRoutines();
+        } catch (err) { console.error('Error deleting routine:', err); }
     };
 
     const handleAssign = (routine) => {
@@ -141,9 +143,9 @@ const Routines = () => {
                                 {editingId ? 'Guardar Cambios' : 'Publicar Rutina'}
                             </button>
                             {editingId && (
-                                <button type="button" className="btn-ghost" style={{ color: 'var(--color-danger)', marginTop: '5px' }} onClick={() => handleDelete(editingId)}>
-                                    Eliminar Rutina
-                                </button>
+                                <button type="button" className="btn-ghost" style={{ color: 'var(--color-danger)', marginTop: '5px' }} onClick={() => setConfirmDelete({ open: true, id: editingId })}>
+                                     Eliminar Rutina
+                                 </button>
                             )}
                         </form>
                     </div>
@@ -207,6 +209,16 @@ const Routines = () => {
                     ))}
                 </div>
             )}
+
+            <ConfirmModal 
+                isOpen={confirmDelete.open}
+                title="¿Eliminar Rutina?"
+                message="Esta acción eliminará la rutina del catálogo. No afectará a los miembros que ya la tengan asignada."
+                confirmText="Eliminar Rutina"
+                onConfirm={handleDelete}
+                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                type="danger"
+            />
         </div>
     );
 };
