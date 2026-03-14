@@ -68,7 +68,7 @@ const Inventory = () => {
                         <h1 className="page-title">Inventario</h1>
                         <HelpTooltip 
                             title="Control de Inventario" 
-                            content="Registra todos los productos del gimnasio (bebidas, suplementos, accesorios). Cuando se vende algo desde el POS, el stock se descuenta automáticamente. Los productos en rojo tienen stock crítico."
+                            content="Registra bebidas, suplementos y ropa aquí. Cuando vendas estos artículos en el Punto de Venta (POS), el sistema descontará automáticamente la cantidad. Los productos marcados en rojo tienen inventario crítico y necesitan reabastecimiento pronto."
                         />
                     </div>
                     <p className="page-subtitle text-muted">Gestión de insumos y productos</p>

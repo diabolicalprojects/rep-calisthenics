@@ -101,7 +101,6 @@ const Dashboard = () => {
                     <HelpTooltip 
                         title="¿Cómo leer mi Dashboard?" 
                         content="Aquí verás una radiografía de tu negocio. Diferenciamos Retención (qué tanto capital está en riesgo) vs Crecimiento (Altas vs Bajas). Toca cualquier tarjeta para una analítica más profunda."
-                        videoUrl="true"
                     />
                 </div>
                 <p className="page-subtitle text-muted">Panel centralizado de métricas y crecimiento.</p>

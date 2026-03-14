@@ -167,7 +167,6 @@ const Analytics = () => {
                         <HelpTooltip
                             title="Centro de Métricas"
                             content="Vista consolidada de todo el sistema. Las gráficas muestran tendencias en tiempo real. Cada módulo tiene su propio acceso directo a su métrica."
-                            videoUrl="true"
                         />
                     </div>
                     <p className="page-subtitle text-muted">Dashboard analítico en tiempo real</p>
@@ -196,7 +195,7 @@ const Analytics = () => {
             </div>
 
             {/* ── ROW 1: DONUT + GROWTH AREA ───────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: 20, ...sectionBox }}>
+            <div className="analytics-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, ...sectionBox }}>
 
                 {/* Donut: Estado de comunidad */}
                 <div style={panel()}>
@@ -246,7 +245,7 @@ const Analytics = () => {
             </div>
 
             {/* ── ROW 2: BAR PLANS + BAR REVENUE ──────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, ...sectionBox }}>
+            <div className="analytics-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, ...sectionBox }}>
 
                 {/* Bar: distribución de planes */}
                 <div style={panel()}>
@@ -290,7 +289,7 @@ const Analytics = () => {
             </div>
 
             {/* ── ROW 3: INVENTORY STATUS ──────────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, ...sectionBox }}>
+            <div className="analytics-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, ...sectionBox }}>
                 {[
                     { label: 'Total Inventario', value: kpi.inventory, icon: Package, color: '#4da6ff', sub: 'artículos registrados' },
                     { label: 'Stock Crítico', value: kpi.critical, icon: Target, color: 'var(--color-danger)', sub: 'menos de 5 unidades' },

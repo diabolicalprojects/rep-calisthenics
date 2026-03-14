@@ -63,25 +63,9 @@ const HelpTooltip = ({ title, content, videoUrl }) => {
                             <X size={15} />
                         </button>
                     </div>
-                    <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--color-text-muted, #aaa)', lineHeight: '1.5' }}>
+                    <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-text-muted, #aaa)', lineHeight: '1.5' }}>
                         {content}
                     </p>
-                    {videoUrl && (
-                        <div style={{
-                            background: '#111',
-                            height: '110px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            border: '1px dashed #444',
-                            fontSize: '12px',
-                            color: '#666'
-                        }}>
-                            ▶ Reproducir Tutorial (15 seg)
-                        </div>
-                    )}
                 </div>,
                 document.body
             )}

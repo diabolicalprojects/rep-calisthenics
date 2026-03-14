@@ -101,7 +101,6 @@ const Retention = () => {
                         <HelpTooltip 
                             title="Motor Anti-Churn" 
                             content="El sistema calcula automáticamente el nivel de riesgo de cada atleta basado en sus días de inactividad. Con un clic puedes enviar mensajes de reactivación por WhatsApp."
-                            videoUrl="true"
                         />
                     </div>
                     <p className="page-subtitle text-muted">IA para detectar clientes en riesgo y automatizar reactivaciones</p>

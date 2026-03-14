@@ -77,10 +77,10 @@ const PublicBooking = () => {
                 <Logo animated={false} />
             </header>
 
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 20px' }}>
-                <div className="glass-panel" style={{ maxWidth: '600px', width: '100%' }}>
-                    <h2 style={{ textAlign: 'center', fontSize: '24px', marginBottom: '10px' }}>Reserva tu Clase de Muestra</h2>
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '30px' }}>Selecciona un horario disponible en tiempo real.</p>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '15px 10px' }}>
+                <div className="glass-panel" style={{ maxWidth: '600px', width: '100%', padding: '20px 15px' }}>
+                    <h2 style={{ textAlign: 'center', fontSize: '22px', marginBottom: '10px' }}>Reserva tu Clase de Muestra</h2>
+                    <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '20px', fontSize: '14px' }}>Selecciona un horario disponible en tiempo real.</p>
 
                     {status === 'selection' && (
                         <div className="animate-fade-in">
@@ -146,20 +146,20 @@ const PublicBooking = () => {
                                 <button type="button" onClick={() => setStatus('selection')} style={{ background: 'none', border: 'none', color: 'var(--color-accent-orange)', cursor: 'pointer', textDecoration: 'underline' }}>Cambiar</button>
                             </div>
 
-                            <div className="form-group">
-                                <label>Nombre Completo</label>
-                                <input required type="text" className="form-input" placeholder="Ej. Carlos Martínez" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                            <div className="form-group" style={{ marginBottom: '10px' }}>
+                                <label style={{ fontSize: '13px' }}>Nombre Completo</label>
+                                <input required type="text" className="form-input" placeholder="Ej. Carlos Martínez" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ height: '40px' }} />
                             </div>
-                            <div className="form-group">
-                                <label>Teléfono (WhatsApp)</label>
-                                <input required type="tel" className="form-input" placeholder="+52 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                            <div className="form-group" style={{ marginBottom: '10px' }}>
+                                <label style={{ fontSize: '13px' }}>Teléfono (WhatsApp)</label>
+                                <input required type="tel" className="form-input" placeholder="+52 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={{ height: '40px' }} />
                             </div>
-                            <div className="form-group">
-                                <label>Correo Electrónico</label>
-                                <input required type="email" className="form-input" placeholder="correo@ejemplo.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                            <div className="form-group" style={{ marginBottom: '10px' }}>
+                                <label style={{ fontSize: '13px' }}>Correo Electrónico</label>
+                                <input required type="email" className="form-input" placeholder="correo@ejemplo.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{ height: '40px' }} />
                             </div>
 
-                            <button className="btn-primary" type="submit" style={{ width: '100%', justifyContent: 'center', padding: '15px', marginTop: '10px' }}>
+                            <button className="btn-primary" type="submit" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px', fontSize: '16px' }}>
                                 Confirmar Clase de Muestra
                             </button>
                         </form>

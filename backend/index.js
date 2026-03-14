@@ -477,11 +477,12 @@ app.get('/api/appointments', async (req, res) => {
 });
 
 app.post('/api/appointments', async (req, res) => {
-  const { title, memberName, time, date, duration, status } = req.body;
+  const { title, memberName, time, date, duration, status, phone, email } = req.body;
   try {
+    const notes = (phone || email) ? `Teléfono: ${phone || 'N/A'}, Email: ${email || 'N/A'}` : '';
     const result = await pool.query(
-      'INSERT INTO appointments (title, member_name, time, date, duration, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [title, memberName, time, date, duration, status || 'Pendiente']
+      'INSERT INTO appointments (title, member_name, time, date, duration, status, notes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [title, memberName, time, date, duration, status || 'Pendiente', notes]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }

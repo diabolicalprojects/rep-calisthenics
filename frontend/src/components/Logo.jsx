@@ -7,7 +7,12 @@ const Logo = ({ animated = true }) => {
             <img
                 src="/logo-rep.png"
                 alt="REP Calisthenics Academy Logo"
-                className="gym-logo"
+                className="gym-logo dark-logo"
+            />
+            <img
+                src="/logo-negro-rep.png"
+                alt="REP Calisthenics Academy Logo"
+                className="gym-logo light-logo"
             />
         </div>
     );
