@@ -17,11 +17,18 @@ dotenv.config();
 
 const app = express();
 const port = 4000; // Hardcoded to match Dokploy configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'secret_gym_key';
-const APP_VERSION = '1.0.5'; // Bump version again to clear cache confusion
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === 'secret_gym_key') {
+  console.error('❌ ERROR CRÍTICO: JWT_SECRET no ha sido configurado o es inseguro.');
+  console.error('El sistema no puede iniciar por razones de seguridad.');
+  process.exit(1);
+}
+
+const APP_VERSION = '1.0.8'; 
 
 if (!process.env.DATABASE_URL) {
   console.error('CRITICAL: DATABASE_URL is not set!');
+  process.exit(1);
 }
 
 const { Pool } = pg;
@@ -201,69 +208,19 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// --- EMERGENCY RESET ROUTE ---
-app.get('/api/debug/force-reset', async (req, res) => {
-  try {
-    const hashedDev = await bcrypt.hash('Diabolical1502', 10);
-    const hashedAdmin = await bcrypt.hash('Diabolical1502', 10);
-
-    // First, clear any conflicting dev/admin users to avoid unique constraint issues
-    await pool.query("DELETE FROM users WHERE LOWER(username) IN ('diabolicaldev', 'admin') OR LOWER(email) IN ('dev@diabolical.com', 'admin@gym.com')");
-
-    // Insert clean accounts
-    await pool.query(`
-      INSERT INTO users (name, username, password, role, email) 
-      VALUES ('Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com')
-    `, [hashedDev]);
-
-    await pool.query(`
-      INSERT INTO users (name, username, password, role, email) 
-      VALUES ('Admin', 'admin', $1, 'admin', 'admin@gym.com')
-    `, [hashedAdmin]);
-
-    res.json({
-      success: true,
-      version: APP_VERSION,
-      message: 'Base de datos LIMPIADA y Cuentas reseteadas con éxito',
-      credentials: {
-        dev: { user: 'DiabolicalDev', pass: 'Diabolical1502' },
-        admin: { user: 'admin', pass: 'Diabolical1502' }
-      }
-    });
-  } catch (err) {
-    console.error('Force reset error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/debug/users-check', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id, username, email, role, (password LIKE $1) as is_hashed FROM users', ['$2%']);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/debug/test-internal', async (req, res) => {
-  try {
-    const devUser = (await pool.query("SELECT * FROM users WHERE username = 'DiabolicalDev'")).rows[0];
-    const adminUser = (await pool.query("SELECT * FROM users WHERE username = 'admin'")).rows[0];
-
-    const devMatch = devUser ? await bcrypt.compare('Diabolical1502', devUser.password) : 'User not found';
-    const adminMatch = adminUser ? await bcrypt.compare('Diabolical1502', adminUser.password) : 'User not found';
-
-    res.json({
-      version: APP_VERSION,
-      dev: { username: 'DiabolicalDev', match: devMatch },
-      admin: { username: 'admin', match: adminMatch }
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 app.get('/api/debug/version', (req, res) => {
   res.json({ version: APP_VERSION, server_time: new Date().toISOString() });
+});
+
+// --- PUBLIC BOOKING HELPERS ---
+// This allows the public page to see busy slots WITHOUT leaking member names/details
+app.get('/api/public/appointments', async (req, res) => {
+  const { date } = req.query;
+  try {
+    if (!date) return res.status(400).json({ error: 'Date is required' });
+    const result = await pool.query('SELECT time FROM appointments WHERE date = $1', [date]);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // --- USER MANAGEMENT ---
@@ -374,14 +331,14 @@ app.post('/api/support/request-reset', async (req, res) => {
 });
 
 // --- MEMBERS ---
-app.get('/api/members', async (req, res) => {
+app.get('/api/members', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM members ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/members', async (req, res) => {
+app.post('/api/members', authenticateToken, async (req, res) => {
   const { name, email, phone, plan, expiration_date, signature_data } = req.body;
   try {
     const result = await pool.query(
@@ -392,7 +349,7 @@ app.post('/api/members', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/members/:id', async (req, res) => {
+app.put('/api/members/:id', authenticateToken, async (req, res) => {
   const { name, email, phone, plan, status, expiration_date } = req.body;
   try {
     const result = await pool.query(
@@ -403,7 +360,7 @@ app.put('/api/members/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/members/:id', async (req, res) => {
+app.delete('/api/members/:id', authenticateToken, async (req, res) => {
   try {
     await pool.query('DELETE FROM members WHERE id = $1', [req.params.id]);
     res.sendStatus(204);
@@ -411,14 +368,14 @@ app.delete('/api/members/:id', async (req, res) => {
 });
 
 // --- INVENTORY ---
-app.get('/api/inventory', async (req, res) => {
+app.get('/api/inventory', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM inventory ORDER BY name ASC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/inventory', async (req, res) => {
+app.post('/api/inventory', authenticateToken, async (req, res) => {
   const { name, price, quantity, category } = req.body;
   try {
     const result = await pool.query(
@@ -429,7 +386,7 @@ app.post('/api/inventory', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/inventory/:id', async (req, res) => {
+app.put('/api/inventory/:id', authenticateToken, async (req, res) => {
   const { quantity } = req.body;
   try {
     const result = await pool.query('UPDATE inventory SET quantity=$1, last_update=NOW() WHERE id=$2 RETURNING *', [quantity, req.params.id]);
@@ -438,14 +395,14 @@ app.put('/api/inventory/:id', async (req, res) => {
 });
 
 // --- MEMBERSHIPS ---
-app.get('/api/memberships', async (req, res) => {
+app.get('/api/memberships', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM memberships ORDER BY price ASC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/memberships', async (req, res) => {
+app.post('/api/memberships', authenticateToken, async (req, res) => {
   const { name, price, duration, description } = req.body;
   try {
     const result = await pool.query(
@@ -456,7 +413,7 @@ app.post('/api/memberships', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/memberships/:id', async (req, res) => {
+app.put('/api/memberships/:id', authenticateToken, async (req, res) => {
   const { name, price, duration, description } = req.body;
   try {
     const result = await pool.query(
@@ -467,7 +424,7 @@ app.put('/api/memberships/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/memberships/:id', async (req, res) => {
+app.delete('/api/memberships/:id', authenticateToken, async (req, res) => {
   try {
     await pool.query('DELETE FROM memberships WHERE id = $1', [req.params.id]);
     res.sendStatus(204);
@@ -475,14 +432,14 @@ app.delete('/api/memberships/:id', async (req, res) => {
 });
 
 // --- TRANSACTIONS ---
-app.get('/api/transactions', async (req, res) => {
+app.get('/api/transactions', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM transactions ORDER BY timestamp DESC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/transactions', async (req, res) => {
+app.post('/api/transactions', authenticateToken, async (req, res) => {
   const { total_amount, payment_method, cashier_name, items, type } = req.body;
   const client = await pool.connect();
   try {
@@ -519,14 +476,14 @@ app.post('/api/transactions', async (req, res) => {
 });
 
 // --- EXPENSES ---
-app.get('/api/expenses', async (req, res) => {
+app.get('/api/expenses', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM expenses ORDER BY date DESC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/expenses', async (req, res) => {
+app.post('/api/expenses', authenticateToken, async (req, res) => {
   const { description, amount, category, recorded_by } = req.body;
   try {
     const result = await pool.query(
@@ -538,14 +495,14 @@ app.post('/api/expenses', async (req, res) => {
 });
 
 // --- PAYMENTS (Accounting) ---
-app.get('/api/payments', async (req, res) => {
+app.get('/api/payments', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM payments ORDER BY date DESC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/payments', async (req, res) => {
+app.post('/api/payments', authenticateToken, async (req, res) => {
   const { memberName, memberId, concept, amount, status } = req.body;
   try {
     const result = await pool.query(
@@ -557,14 +514,14 @@ app.post('/api/payments', async (req, res) => {
 });
 
 // --- VISITS ---
-app.get('/api/visits', async (req, res) => {
+app.get('/api/visits', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM visits ORDER BY timestamp DESC LIMIT 50');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/visits', async (req, res) => {
+app.post('/api/visits', authenticateToken, async (req, res) => {
   const { member_id, member_name } = req.body;
   try {
     await pool.query('INSERT INTO visits (member_id, member_name) VALUES ($1, $2)', [member_id, member_name]);
@@ -576,7 +533,7 @@ app.post('/api/visits', async (req, res) => {
 });
 
 // --- APPOINTMENTS ---
-app.get('/api/appointments', async (req, res) => {
+app.get('/api/appointments', authenticateToken, async (req, res) => {
   const { date } = req.query;
   try {
     let queryText = 'SELECT * FROM appointments ORDER BY date ASC, time ASC';
@@ -602,7 +559,7 @@ app.post('/api/appointments', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/appointments/:id/status', async (req, res) => {
+app.put('/api/appointments/:id/status', authenticateToken, async (req, res) => {
   const { status } = req.body;
   try {
     await pool.query('UPDATE appointments SET status=$1 WHERE id=$2', [status, req.params.id]);
@@ -611,14 +568,14 @@ app.put('/api/appointments/:id/status', async (req, res) => {
 });
 
 // --- ROUTINES ---
-app.get('/api/routines', async (req, res) => {
+app.get('/api/routines', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM routines ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/routines', async (req, res) => {
+app.post('/api/routines', authenticateToken, async (req, res) => {
   const { name, level, focus, icon, description } = req.body;
   try {
     const result = await pool.query(
@@ -629,7 +586,7 @@ app.post('/api/routines', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/routines/:id', async (req, res) => {
+app.put('/api/routines/:id', authenticateToken, async (req, res) => {
   const { name, level, focus, icon, description } = req.body;
   try {
     const result = await pool.query(
@@ -640,7 +597,7 @@ app.put('/api/routines/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.delete('/api/routines/:id', async (req, res) => {
+app.delete('/api/routines/:id', authenticateToken, async (req, res) => {
   try {
     await pool.query('DELETE FROM routines WHERE id = $1', [req.params.id]);
     res.sendStatus(204);
@@ -648,7 +605,7 @@ app.delete('/api/routines/:id', async (req, res) => {
 });
 
 // --- NOTIFICATIONS LOG ---
-app.get('/api/notifications', async (req, res) => {
+app.get('/api/notifications', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM notifications_log ORDER BY timestamp DESC LIMIT 50');
     res.json(result.rows);

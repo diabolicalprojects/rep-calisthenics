@@ -19,7 +19,7 @@ const PublicBooking = () => {
 
     const checkAvailability = async () => {
         try {
-            const data = await api.getAppointments(selectedDate);
+            const data = await api.getPublicAvailability(selectedDate);
             const bookedTimes = data.map(app => app.time);
             const freeSlots = ALL_SLOTS.filter(slot => !bookedTimes.includes(slot));
             setAvailableSlots(freeSlots);

@@ -152,4 +152,7 @@ export const api = {
   
   // NOTIFICATIONS
   getNotifications: () => fetch(`${API_URL}/notifications`, { headers: getAuthHeaders() }).then(handleResponse),
+
+  // PUBLIC BOOKING
+  getPublicAvailability: (date) => fetch(`${API_URL}/public/appointments?date=${date}`).then(handleResponse),
 };
