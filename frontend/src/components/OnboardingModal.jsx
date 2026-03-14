@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, ArrowRight, ArrowLeft, Check, Camera, PenTool, Trash2, RotateCcw } from 'lucide-react';
+import { X, Check, Camera, PenTool, Calendar, ShieldCheck, DollarSign, User } from 'lucide-react';
 import { api } from '../services/api';
 import SignatureCanvas from 'react-signature-canvas';
 
 const OnboardingModal = ({ plans, onClose, onSuccess }) => {
-    const [step, setStep] = useState(1);
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
         name: '',
@@ -12,13 +11,14 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         phone: '',
         plan: plans.length > 0 ? plans[0].name : '',
         status: 'Activo',
-        signature: null,      // will hold base64 SVG data URL
+        signature: null,
         biometrics: false,
         joinDate: today,
         cutoffDate: '',
         isCustomPlan: false,
         customPlanName: '',
         customPlanPrice: '',
+        paymentMethod: 'Efectivo'
     });
     const [loading, setLoading] = useState(false);
     const sigCanvasRef = useRef(null);
@@ -32,54 +32,54 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         }
     }, [formData.joinDate]);
 
-    const handleNext = () => {
-        if (step === 3 && sigCanvasRef.current && sigCanvasRef.current.isEmpty()) {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (sigCanvasRef.current && sigCanvasRef.current.isEmpty()) {
             alert('Por favor dibuja tu firma antes de continuar.');
             return;
         }
-        if (step === 3 && sigCanvasRef.current) {
-            const signatureData = sigCanvasRef.current.toDataURL('image/svg+xml');
-            setFormData(prev => ({ ...prev, signature: signatureData }));
-        }
-        setStep(step + 1);
-    };
 
-    const handlePrev = () => setStep(step - 1);
-
-    const clearSig = () => {
-        if (sigCanvasRef.current) sigCanvasRef.current.clear();
-        setFormData(prev => ({ ...prev, signature: null }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!formData.signature && sigCanvasRef.current && !sigCanvasRef.current.isEmpty()) {
-            const signatureData = sigCanvasRef.current.toDataURL('image/svg+xml');
-            setFormData(prev => ({ ...prev, signature: signatureData }));
-        }
+        const signatureData = sigCanvasRef.current.toDataURL('image/svg+xml');
         setLoading(true);
+        
         try {
             let planName = formData.plan;
+            let planPrice = 0;
 
-            // If it's a custom plan, create it first
+            // 1. Create custom plan if needed
             if (formData.isCustomPlan) {
                 if (!formData.customPlanName || !formData.customPlanPrice) {
-                    throw new Error('Nombre y precio del plan son requeridos para planes personalizados.');
+                    throw new Error('Nombre y precio del plan son requeridos.');
                 }
                 const newPlan = await api.addMembership({
                     name: formData.customPlanName,
                     price: parseFloat(formData.customPlanPrice),
-                    duration: 30 // Default 30 days
+                    duration: 30
                 });
                 planName = newPlan.name;
+                planPrice = parseFloat(formData.customPlanPrice);
+            } else {
+                const selectedPlan = plans.find(p => p.name === formData.plan);
+                planPrice = selectedPlan ? parseFloat(selectedPlan.price) : 0;
             }
 
-            await api.addMember({
+            // 2. Add Member
+            const newMember = await api.addMember({
                 ...formData,
-                plan: planName, // Use the newly created plan name
-                lastVisit: null,
-                visitsCount: 0,
+                plan: planName,
+                signature: signatureData
             });
+
+            // 3. Register initial transaction/payment
+            await api.createTransaction({
+                total_amount: planPrice,
+                payment_method: formData.paymentMethod,
+                cashier_name: 'Recepción',
+                type: 'Membresía',
+                items: [{ id: newMember.id, name: `Alta Membresía: ${planName}`, price: planPrice, type: 'membership' }]
+            });
+
             setLoading(false);
             onSuccess();
         } catch (err) {
@@ -89,326 +89,295 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         }
     };
 
-    const totalSteps = 4;
-    const stepTitles = ['Identidad y Contacto', 'Asignación de Plan', 'Firma Digital', 'Fechas de Membresía'];
-
-    const isStep1Valid = formData.name && formData.email && formData.phone;
-
     return (
         <div className="modal-overlay" style={{ zIndex: 99999 }}>
             <div style={{
                 width: '100%',
-                maxWidth: '520px',
+                maxWidth: '900px',
                 background: 'var(--color-bg-secondary, #111)',
                 border: '1px solid var(--color-glass-border)',
-                borderRadius: '20px',
+                borderRadius: '24px',
                 overflow: 'hidden',
-                margin: 'auto',
-                boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
+                margin: '20px',
+                boxShadow: '0 40px 100px rgba(0,0,0,0.9)',
                 animation: 'modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1)',
                 color: 'var(--color-text-main)',
+                display: 'flex',
+                flexDirection: 'column'
             }}>
                 {/* Header */}
                 <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '18px 24px',
+                    padding: '20px 32px',
                     borderBottom: '1px solid var(--color-glass-border)',
                     background: 'var(--color-glass)',
                 }}>
                     <div>
-                        <h2 style={{ fontSize: '17px', margin: 0 }}>Alta de Miembro</h2>
-                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-                            Paso {step} de {totalSteps}: {stepTitles[step - 1]}
+                        <h2 style={{ fontSize: '20px', margin: 0, letterSpacing: '-0.5px' }}>Registro One-Flow</h2>
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
+                            Flujo continuo de contratación y firma digital
                         </p>
                     </div>
-                    <button onClick={onClose} className="btn-ghost" style={{ padding: '6px', minHeight: 'unset', border: 'none' }}>
-                        <X size={20} />
+                    <button onClick={onClose} className="btn-ghost" style={{ padding: '8px', minHeight: 'unset', border: 'none' }}>
+                        <X size={22} />
                     </button>
                 </div>
 
-                {/* Progress bar */}
-                <div style={{ height: '3px', background: 'var(--color-glass-border)' }}>
-                    <div style={{
-                        width: `${(step / totalSteps) * 100}%`,
-                        background: 'var(--color-accent-orange)',
-                        height: '100%',
-                        transition: 'width 0.35s ease',
-                        boxShadow: '0 0 10px var(--color-accent-orange)',
-                    }} />
-                </div>
-
-                {/* Body */}
-                <div style={{ padding: '28px 24px', maxHeight: '75vh', overflowY: 'auto' }}>
-
-                    {/* STEP 1: Info */}
-                    {step === 1 && (
-                        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div className="form-group">
-                                <label>Nombre Completo *</label>
-                                <input required type="text" placeholder="Ej. Juan Pérez" className="form-input"
-                                    value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Correo Electrónico *</label>
-                                <input required type="email" placeholder="correo@ejemplo.com" className="form-input"
-                                    value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Teléfono (WhatsApp) *</label>
-                                <input required type="tel" placeholder="+52 55 1234 5678" className="form-input"
-                                    value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                            </div>
-                            <div
-                                onClick={() => setFormData({ ...formData, biometrics: !formData.biometrics })}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '14px',
-                                    padding: '14px 16px',
-                                    border: formData.biometrics ? '1px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
-                                    borderRadius: '10px',
-                                    background: formData.biometrics ? 'rgba(244,140,37,0.08)' : 'var(--color-glass)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                }}
-                            >
-                                <Camera size={22} color={formData.biometrics ? 'var(--color-accent-orange)' : 'var(--color-text-muted)'} />
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 600, fontSize: '14px' }}>Captura Biométrica</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Para acceso por reconocimiento facial (opcional)</div>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                    {/* Left Column: Data & Plan */}
+                    <div style={{ flex: 1.2, padding: '32px', overflowY: 'auto', borderRight: '1px solid var(--color-glass-border)' }}>
+                        
+                        {/* Section: Identity */}
+                        <div style={{ marginBottom: '32px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                <div style={{ background: 'var(--color-accent-orange)', padding: '6px', borderRadius: '8px', color: '#000' }}>
+                                    <User size={18} />
                                 </div>
-                                {formData.biometrics && <Check size={18} color="var(--color-accent-orange)" />}
+                                <h3 style={{ fontSize: '16px', margin: 0 }}>Identidad y Contacto</h3>
+                            </div>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                    <label>Nombre Completo *</label>
+                                    <input required type="text" placeholder="Ej. Juan Pérez" className="form-input"
+                                        value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Correo Electrónico *</label>
+                                    <input required type="email" placeholder="correo@ejemplo.com" className="form-input"
+                                        value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Teléfono *</label>
+                                    <input required type="tel" placeholder="55 1234 5678" className="form-input"
+                                        value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* STEP 2: Plan */}
-                    {step === 2 && (
-                        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {plans.length === 0 && (
-                                <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '30px 0' }}>
-                                    No hay planes configurados. Ve a "Membresías" para crearlos primero.
-                                </p>
-                            )}
-                            {plans.map(p => (
-                                <div key={p.id}
-                                    onClick={() => setFormData({ ...formData, plan: p.name, isCustomPlan: false })}
+                        {/* Section: Plan Selection */}
+                        <div style={{ marginBottom: '32px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                <div style={{ background: 'var(--color-accent-blue)', padding: '6px', borderRadius: '8px', color: '#fff' }}>
+                                    <ShieldCheck size={18} />
+                                </div>
+                                <h3 style={{ fontSize: '16px', margin: 0 }}>Membresía y Pago</h3>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {plans.map(p => (
+                                    <div key={p.id}
+                                        onClick={() => setFormData({ ...formData, plan: p.name, isCustomPlan: false })}
+                                        style={{
+                                            padding: '14px 18px',
+                                            borderRadius: '12px',
+                                            border: (formData.plan === p.name && !formData.isCustomPlan) ? '2px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
+                                            background: (formData.plan === p.name && !formData.isCustomPlan) ? 'rgba(244,140,37,0.1)' : 'var(--color-glass)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            transition: 'all 0.2s',
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ fontWeight: 600, fontSize: '14px' }}>{p.name}</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Membresía estándar</div>
+                                        </div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-accent-orange)' }}>${p.price}</div>
+                                    </div>
+                                ))}
+
+                                {/* Custom Plan Trigger */}
+                                <div 
+                                    onClick={() => setFormData({ ...formData, isCustomPlan: true })}
                                     style={{
-                                        padding: '18px 20px',
-                                        borderRadius: '10px',
-                                        border: (formData.plan === p.name && !formData.isCustomPlan) ? '2px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
-                                        background: (formData.plan === p.name && !formData.isCustomPlan) ? 'rgba(244,140,37,0.08)' : 'var(--color-glass)',
+                                        padding: '14px 18px',
+                                        borderRadius: '12px',
+                                        border: formData.isCustomPlan ? '2px solid var(--color-accent-orange)' : '1px dashed var(--color-glass-border)',
+                                        background: formData.isCustomPlan ? 'rgba(244,140,37,0.1)' : 'transparent',
                                         cursor: 'pointer',
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        transition: 'all 0.2s',
                                     }}
                                 >
-                                    <div>
-                                        <div style={{ fontWeight: 600, fontSize: '15px' }}>{p.name}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '3px' }}>
-                                            {p.description || 'Acceso completo al gimnasio'}
-                                        </div>
-                                    </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-accent-orange)' }}>
-                                            ${p.price}
-                                        </span>
-                                        {(formData.plan === p.name && !formData.isCustomPlan) && <Check size={16} color="var(--color-accent-orange)" />}
+                                        <PenTool size={16} />
+                                        <span style={{ fontSize: '14px', fontWeight: 600 }}>Plan Personalizado</span>
                                     </div>
-                                </div>
-                            ))}
-
-                            {/* Option for Custom Plan */}
-                            <div 
-                                onClick={() => setFormData({ ...formData, isCustomPlan: true })}
-                                style={{
-                                    padding: '18px 20px',
-                                    borderRadius: '10px',
-                                    border: formData.isCustomPlan ? '2px solid var(--color-accent-orange)' : '1px dashed var(--color-glass-border)',
-                                    background: formData.isCustomPlan ? 'rgba(244,140,37,0.08)' : 'transparent',
-                                    cursor: 'pointer',
-                                    marginTop: '10px',
-                                    transition: 'all 0.2s',
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: formData.isCustomPlan ? '15px' : '0' }}>
-                                    <PenTool size={18} color={formData.isCustomPlan ? 'var(--color-accent-orange)' : 'var(--color-text-muted)'} />
-                                    <span style={{ fontWeight: 600, fontSize: '15px', color: formData.isCustomPlan ? 'var(--color-accent-orange)' : 'var(--color-text-muted)' }}>
-                                        {formData.isCustomPlan ? 'Configurando Plan Ad-hoc' : 'Crear un plan nuevo sobre la marcha'}
-                                    </span>
-                                    {formData.isCustomPlan && <Check size={16} color="var(--color-accent-orange)" style={{ marginLeft: 'auto' }} />}
-                                </div>
-
-                                {formData.isCustomPlan && (
-                                    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                        <div className="form-group">
-                                            <label style={{ fontSize: '11px' }}>Nombre del Plan</label>
-                                            <input type="text" className="form-input" placeholder="Ej. Promoción Verano" 
+                                    {formData.isCustomPlan && (
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
+                                            <input type="text" className="form-input" placeholder="Nombre" 
                                                 value={formData.customPlanName} 
                                                 onChange={e => setFormData({ ...formData, customPlanName: e.target.value })}
                                                 onClick={e => e.stopPropagation()} 
                                             />
-                                        </div>
-                                        <div className="form-group">
-                                            <label style={{ fontSize: '11px' }}>Precio ($)</label>
-                                            <input type="number" className="form-input" placeholder="500" 
+                                            <input type="number" className="form-input" placeholder="Precio ($)" 
                                                 value={formData.customPlanPrice} 
                                                 onChange={e => setFormData({ ...formData, customPlanPrice: e.target.value })}
                                                 onClick={e => e.stopPropagation()} 
                                             />
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* STEP 3: Signature Canvas */}
-                    {step === 3 && (
-                        <div className="animate-fade-in">
-                            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
-                                El miembro debe firmar en el recuadro de abajo usando el mouse o pantalla táctil.
-                            </p>
-
-                            {/* Terms */}
-                            <div style={{
-                                background: 'var(--color-glass)',
-                                border: '1px solid var(--color-glass-border)',
-                                borderRadius: '8px',
-                                padding: '14px',
-                                marginBottom: '16px',
-                                maxHeight: '120px',
-                                overflowY: 'auto',
-                                fontSize: '11px',
-                                color: 'var(--color-text-muted)',
-                                lineHeight: '1.6',
-                            }}>
-                                <strong style={{ color: 'var(--color-text-main)' }}>TÉRMINOS Y EXENCIÓN DE RESPONSABILIDAD</strong><br /><br />
-                                Al firmar, el usuario reconoce que participa en actividades deportivas de REP Calisthenics bajo su propio riesgo. Acepta respetar el reglamento interno y realizar los pagos puntuales del plan <strong>{formData.isCustomPlan ? formData.customPlanName : formData.plan}</strong>. La membresía inicia el <strong>{formData.joinDate}</strong>.
+                        {/* Section: Payment Method */}
+                        <div>
+                            <label style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px', display: 'block' }}>Método de Pago Initial</label>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                {['Efectivo', 'Tarjeta', 'Transferencia'].map(m => (
+                                    <button
+                                        type="button"
+                                        key={m}
+                                        onClick={() => setFormData({...formData, paymentMethod: m})}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--color-glass-border)',
+                                            background: formData.paymentMethod === m ? 'var(--color-accent-orange)' : 'var(--color-glass)',
+                                            color: formData.paymentMethod === m ? '#000' : 'var(--color-text-main)',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {m}
+                                    </button>
+                                ))}
                             </div>
+                        </div>
+                    </div>
 
-                            {/* Canvas */}
+                    {/* Right Column: Dates & Signature */}
+                    <div style={{ flex: 1, padding: '32px', background: 'rgba(0,0,0,0.2)', overflowY: 'auto' }}>
+                        
+                        {/* Section: Dates */}
+                        <div style={{ marginBottom: '32px' }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                                <div style={{ background: 'var(--color-accent-orange)', padding: '6px', borderRadius: '8px', color: '#000' }}>
+                                    <Calendar size={18} />
+                                </div>
+                                <h3 style={{ fontSize: '16px', margin: 0 }}>Fechas de Vigencia</h3>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <div className="form-group">
+                                    <label>Fecha de Inicio</label>
+                                    <input type="date" className="form-input"
+                                        value={formData.joinDate} onChange={e => setFormData({ ...formData, joinDate: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Fecha de Corte</label>
+                                    <input type="date" className="form-input"
+                                        value={formData.cutoffDate} onChange={e => setFormData({ ...formData, cutoffDate: e.target.value })} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section: Signature */}
+                        <div style={{ marginBottom: '32px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                                <div style={{ background: 'var(--color-accent-blue)', padding: '6px', borderRadius: '8px', color: '#fff' }}>
+                                    <PenTool size={18} />
+                                </div>
+                                <h3 style={{ fontSize: '16px', margin: 0 }}>Firma de Conformidad</h3>
+                            </div>
+                            
                             <div style={{
-                                border: '2px dashed var(--color-accent-orange)',
-                                borderRadius: '10px',
-                                overflow: 'hidden',
                                 background: '#fafafa',
-                                position: 'relative',
+                                borderRadius: '12px',
+                                border: '2px solid var(--color-glass-border)',
+                                height: '180px',
+                                position: 'relative'
                             }}>
                                 <SignatureCanvas
                                     ref={sigCanvasRef}
                                     penColor="#111"
                                     canvasProps={{
-                                        width: 460,
+                                        width: 380,
                                         height: 180,
-                                        style: { display: 'block', width: '100%', height: '180px', touchAction: 'none' }
+                                        className: 'sigCanvas',
+                                        style: { width: '100%', height: '100%' }
                                     }}
                                 />
-                                <div style={{
-                                    position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)',
-                                    fontSize: '11px', color: '#aaa', pointerEvents: 'none', whiteSpace: 'nowrap'
-                                }}>
-                                    ✒ Dibuja tu firma aquí
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                                <button className="btn-ghost" style={{ flex: 1, gap: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }} onClick={clearSig}>
-                                    <RotateCcw size={14} /> Limpiar firma
+                                <button 
+                                    type="button"
+                                    onClick={() => sigCanvasRef.current?.clear()}
+                                    style={{
+                                        position: 'absolute', top: '10px', right: '10px',
+                                        background: 'rgba(0,0,0,0.1)', border: 'none', padding: '4px', borderRadius: '4px'
+                                    }}
+                                >
+                                    <X size={14} />
                                 </button>
                             </div>
                         </div>
-                    )}
 
-                    {/* STEP 4: Dates */}
-                    {step === 4 && (
-                        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                                Define el día de ingreso oficial y la fecha de corte (cobro de renovación).
-                            </p>
-                            <div className="form-group">
-                                <label>📅 Fecha de Ingreso</label>
-                                <input type="date" className="form-input"
-                                    value={formData.joinDate}
-                                    onChange={e => setFormData({ ...formData, joinDate: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>🔄 Fecha de Corte (Renovación)</label>
-                                <input type="date" className="form-input"
-                                    value={formData.cutoffDate}
-                                    onChange={e => setFormData({ ...formData, cutoffDate: e.target.value })}
-                                />
-                                <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                                    Se calcula automáticamente (+30 días). Puedes ajustarla manualmente.
-                                </span>
-                            </div>
+                        {/* Summary & Submit */}
+                        <div style={{ 
+                            background: 'var(--color-accent-orange-glass)', 
+                            padding: '20px', 
+                            borderRadius: '16px', 
+                            border: '1px solid var(--color-accent-orange)',
+                            marginTop: '20px'
+                        }}>
+                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <span style={{ fontSize: '13px', opacity: 0.8 }}>Total a Cobrar:</span>
+                                <span style={{ fontSize: '16px', fontWeight: 800 }}>${formData.isCustomPlan ? formData.customPlanPrice || 0 : plans.find(p => p.name === formData.plan)?.price || 0}</span>
+                             </div>
+                             <p style={{ fontSize: '11px', margin: '0 0 15px', opacity: 0.7 }}>Incluye inscripción y primer mes de membresía.</p>
 
-                            {/* Summary */}
-                            <div style={{
-                                background: 'var(--color-glass)',
-                                border: '1px solid var(--color-glass-border)',
-                                borderRadius: '12px',
-                                padding: '16px',
-                                display: 'flex', flexDirection: 'column', gap: '10px'
-                            }}>
-                                <h4 style={{ margin: 0, fontSize: '13px', color: 'var(--color-accent-orange)' }}>Resumen de Registro</h4>
-                                {[
-                                    ['Nombre', formData.name],
-                                    ['Email', formData.email],
-                                    ['Teléfono', formData.phone],
-                                    ['Plan', formData.isCustomPlan ? formData.customPlanName : formData.plan],
-                                    ['Precio Plan', formData.isCustomPlan ? `$${formData.customPlanPrice}` : 'S/D'],
-                                    ['Ingreso', formData.joinDate],
-                                    ['Corte', formData.cutoffDate],
-                                ].map(([label, value]) => (
-                                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '6px' }}>
-                                        <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
-                                        <span style={{ fontWeight: 600 }}>{value || '—'}</span>
-                                    </div>
-                                ))}
-                                {formData.signature && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
-                                        <Check size={14} color="var(--color-success)" />
-                                        <span style={{ fontSize: '12px', color: 'var(--color-success)' }}>Firma digital capturada</span>
-                                    </div>
+                             <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="btn-primary" 
+                                style={{ 
+                                    width: '100%', 
+                                    minHeight: '48px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '10px',
+                                    background: 'var(--color-accent-orange)',
+                                    color: '#000',
+                                    border: 'none',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {loading ? 'Procesando...' : (
+                                    <>
+                                        <Check size={20} />
+                                        Completar Registro y Cobro
+                                    </>
                                 )}
-                            </div>
+                             </button>
                         </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div style={{
-                    padding: '16px 24px',
-                    borderTop: '1px solid var(--color-glass-border)',
-                    background: 'var(--color-glass)',
-                    display: 'flex', justifyContent: 'space-between', gap: '12px',
-                }}>
-                    <button className="btn-ghost" onClick={step === 1 ? onClose : handlePrev}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', minHeight: '40px' }}>
-                        {step === 1 ? 'Cancelar' : <><ArrowLeft size={15} /> Atrás</>}
-                    </button>
-
-                    {step < totalSteps ? (
-                        <button className="btn-primary"
-                            style={{ minHeight: '40px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            onClick={handleNext}
-                            disabled={(step === 1 && !isStep1Valid) || (step === 2 && formData.isCustomPlan && (!formData.customPlanName || !formData.customPlanPrice))}
-                        >
-                            Siguiente <ArrowRight size={15} />
-                        </button>
-                    ) : (
-                        <button className="btn-primary"
-                            style={{ background: 'var(--color-success)', border: 'none', minHeight: '40px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            onClick={handleSubmit}
-                            disabled={loading}
-                        >
-                            {loading ? 'Procesando...' : <><Check size={15} /> Completar Registro</>}
-                        </button>
-                    )}
-                </div>
+                    </div>
+                </form>
             </div>
+
+            <style>{`
+                .sigCanvas { cursor: crosshair; }
+                .form-input { 
+                    background: var(--color-glass); 
+                    border: 1px solid var(--color-glass-border);
+                    color: white;
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    width: 100%;
+                    font-size: 14px;
+                }
+                .form-group label {
+                    display: block;
+                    font-size: 12px;
+                    color: var(--color-text-muted);
+                    margin-bottom: 6px;
+                }
+                @keyframes modal-appear {
+                    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+                    to { opacity: 1; transform: scale(1) translateY(0); }
+                }
+            `}</style>
         </div>
     );
 };

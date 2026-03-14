@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Search, Calendar, Users, BarChart3, Clock, X } from 'lucide-react';
+import { UserCheck, Search, Calendar, Users, BarChart2, Clock, X } from 'lucide-react';
 import { api } from '../services/api';
 
 const Visits = () => {
@@ -114,7 +114,7 @@ const Visits = () => {
                 <div className="glass-panel metric-card pulse-hover">
                     <div className="metric-header">
                         <h3>Actividad Reciente</h3>
-                        <div className="icon-wrapper blue"><BarChart3 size={20} /></div>
+                        <div className="icon-wrapper blue"><BarChart2 size={20} /></div>
                     </div>
                     <div className="metric-value">{stats.week}</div>
                     <p className="text-muted" style={{ fontSize: '12px' }}>Últimos registros</p>

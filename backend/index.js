@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
+import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
@@ -24,12 +26,39 @@ if (!JWT_SECRET || JWT_SECRET === 'secret_gym_key') {
   process.exit(1);
 }
 
-const APP_VERSION = '1.0.8'; 
+const APP_VERSION = '1.0.9'; 
 
-if (!process.env.DATABASE_URL) {
-  console.error('CRITICAL: DATABASE_URL is not set!');
-  process.exit(1);
-}
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login requests per window
+  message: { error: 'Demasiados intentos de inicio de sesión. Por favor, intenta de nuevo en 15 minutos.' }
+});
+
+// --- SCHEMAS (ZOD) ---
+const ExpenseSchema = z.object({
+  description: z.string().min(1),
+  amount: z.number().positive(),
+  category: z.string().optional(),
+  recorded_by: z.string().optional()
+});
+
+const TransactionSchema = z.object({
+  total_amount: z.number().nonnegative(),
+  payment_method: z.string(),
+  cashier_name: z.string().optional(),
+  type: z.string().optional(),
+  items: z.array(z.any()).optional()
+});
+
+const MemberSchema = z.object({
+  name: z.string().min(3),
+  email: z.string().email(),
+  phone: z.string().min(10),
+  plan: z.string(),
+  status: z.enum(['Activo', 'Inactivo']).optional(),
+  joinDate: z.string().optional(),
+  cutoffDate: z.string().optional()
+});
 
 const { Pool } = pg;
 let pool;
@@ -152,9 +181,9 @@ const authorize = (roles) => {
 };
 
 // --- AUTH ROUTES ---
-app.post('/api/auth/login', async (req, res) => {
-  const { identifier, email, password } = req.body;
-  let loginId = (identifier || email || '').toString().trim();
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
+  const { identifier, email, username, password } = req.body;
+  let loginId = (identifier || email || username || '').toString().trim();
   const rawPassword = (password || '').toString().trim();
 
   console.log(`\n🔍 Login attempt: "${loginId}"`);
@@ -339,14 +368,18 @@ app.get('/api/members', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/members', authenticateToken, async (req, res) => {
-  const { name, email, phone, plan, expiration_date, signature_data } = req.body;
   try {
+    const validated = MemberSchema.parse(req.body);
+    const { signature } = req.body;
     const result = await pool.query(
-      'INSERT INTO members (name, email, phone, plan, expiration_date, signature_data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, email, phone, plan, expiration_date, signature_data]
+      'INSERT INTO members (name, email, phone, plan, status, expiration_date, signature_data, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [validated.name, validated.email, validated.phone, validated.plan, validated.status || 'Activo', validated.cutoffDate || null, signature || null, validated.joinDate || 'NOW()']
     );
     res.status(201).json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 app.put('/api/members/:id', authenticateToken, async (req, res) => {
@@ -433,15 +466,24 @@ app.delete('/api/memberships/:id', authenticateToken, async (req, res) => {
 
 // --- TRANSACTIONS ---
 app.get('/api/transactions', authenticateToken, async (req, res) => {
+  const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query('SELECT * FROM transactions ORDER BY timestamp DESC');
+    let queryText = 'SELECT * FROM transactions';
+    let params = [];
+    if (startDate && endDate) {
+      queryText += ' WHERE timestamp BETWEEN $1 AND $2';
+      params = [startDate, endDate];
+    }
+    queryText += ' ORDER BY timestamp DESC';
+    const result = await pool.query(queryText, params);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/transactions', authenticateToken, async (req, res) => {
-  const { total_amount, payment_method, cashier_name, items, type } = req.body;
-  const client = await pool.connect();
+  try {
+    const { total_amount, payment_method, cashier_name, items, type } = TransactionSchema.parse(req.body);
+    const client = await pool.connect();
   try {
     await client.query('BEGIN');
     
@@ -473,31 +515,54 @@ app.post('/api/transactions', authenticateToken, async (req, res) => {
   } finally {
     client.release();
   }
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // --- EXPENSES ---
 app.get('/api/expenses', authenticateToken, async (req, res) => {
+  const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query('SELECT * FROM expenses ORDER BY date DESC');
+    let queryText = 'SELECT * FROM expenses';
+    let params = [];
+    if (startDate && endDate) {
+      queryText += ' WHERE date BETWEEN $1 AND $2';
+      params = [startDate, endDate];
+    }
+    queryText += ' ORDER BY date DESC';
+    const result = await pool.query(queryText, params);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/expenses', authenticateToken, async (req, res) => {
-  const { description, amount, category, recorded_by } = req.body;
   try {
+    const validated = ExpenseSchema.parse(req.body);
     const result = await pool.query(
       'INSERT INTO expenses (description, amount, category, recorded_by) VALUES ($1, $2, $3, $4) RETURNING *',
-      [description, amount, category, recorded_by]
+      [validated.description, validated.amount, validated.category, validated.recorded_by || 'Admin']
     );
     res.status(201).json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 // --- PAYMENTS (Accounting) ---
 app.get('/api/payments', authenticateToken, async (req, res) => {
+  const { startDate, endDate } = req.query;
   try {
-    const result = await pool.query('SELECT * FROM payments ORDER BY date DESC');
+    let queryText = 'SELECT * FROM payments';
+    let params = [];
+    if (startDate && endDate) {
+      queryText += ' WHERE date BETWEEN $1 AND $2';
+      params = [startDate, endDate];
+    }
+    queryText += ' ORDER BY date DESC';
+    const result = await pool.query(queryText, params);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

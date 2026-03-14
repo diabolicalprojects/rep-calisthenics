@@ -127,10 +127,15 @@ export const api = {
   }).then(handleResponse),
 
   // TRANSACTIONS
-  getTransactions: () => fetch(`${API_URL}/transactions`, { headers: getAuthHeaders() }).then(handleResponse),
+  getTransactions: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    return fetch(`${API_URL}/transactions?${params.toString()}`, { headers: getAuthHeaders() }).then(handleResponse);
+  },
   createTransaction: (data) => fetch(`${API_URL}/transactions`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
 
@@ -138,15 +143,20 @@ export const api = {
   getVisits: () => fetch(`${API_URL}/visits`, { headers: getAuthHeaders() }).then(handleResponse),
   recordVisit: (data) => fetch(`${API_URL}/visits`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
 
   // EXPENSES
-  getExpenses: () => fetch(`${API_URL}/expenses`, { headers: getAuthHeaders() }).then(handleResponse),
+  getExpenses: (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    return fetch(`${API_URL}/expenses?${params.toString()}`, { headers: getAuthHeaders() }).then(handleResponse);
+  },
   createExpense: (data) => fetch(`${API_URL}/expenses`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
   
