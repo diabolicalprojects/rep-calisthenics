@@ -1,9 +1,9 @@
 import React from 'react';
 import './Logo.css';
 
-const Logo = ({ animated = true }) => {
+const Logo = ({ animated = true, style = {}, className = '' }) => {
     return (
-        <div className={`logo-wrapper ${animated ? 'animated' : ''}`}>
+        <div className={`logo-wrapper ${animated ? 'animated' : ''} ${className}`} style={style}>
             <img
                 src="/logo-rep.png"
                 alt="REP Calisthenics Academy Logo"

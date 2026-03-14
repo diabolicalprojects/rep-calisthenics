@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, ChevronLeft, User, Phone, Mail } from 'lucide-react';
 import { api } from '../services/api';
 import Logo from '../components/Logo';
 
@@ -9,8 +9,8 @@ const PublicBooking = () => {
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
     const [status, setStatus] = useState('selection'); // selection, form, success
+    const [loading, setLoading] = useState(false);
 
-    // Config: working hours for trial classes
     const ALL_SLOTS = ['08:00', '10:00', '12:00', '16:00', '18:00', '20:00'];
 
     useEffect(() => {
@@ -21,8 +21,6 @@ const PublicBooking = () => {
         try {
             const data = await api.getAppointments(selectedDate);
             const bookedTimes = data.map(app => app.time);
-            
-            // Allow only slots not currently booked
             const freeSlots = ALL_SLOTS.filter(slot => !bookedTimes.includes(slot));
             setAvailableSlots(freeSlots);
             setSelectedSlot(null);
@@ -33,6 +31,7 @@ const PublicBooking = () => {
 
     const handleBooking = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             await api.addAppointment({
                 title: 'Clase de Muestra (Lead)',
@@ -48,126 +47,498 @@ const PublicBooking = () => {
             setStatus('success');
         } catch (err) {
             alert('Hubo un error al reservar. Inténtalo de nuevo.');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const nextStep = () => {
+        if (selectedSlot) setStatus('form');
+    };
+
+    const prevStep = () => {
+        setStatus('selection');
     };
 
     if (status === 'success') {
         return (
-            <div style={{ display: 'flex', minHeight: '100vh', justifyContent: 'center', alignItems: 'center', background: 'var(--color-bg-main)' }}>
-                <div className="glass-panel" style={{ textAlign: 'center', maxWidth: '400px', width: '90%', padding: '40px' }}>
-                    <CheckCircle size={60} color="var(--color-success)" style={{ margin: '0 auto 20px auto' }} />
-                    <h2 style={{ color: 'white', marginBottom: '15px' }}>¡Reserva Confirmada!</h2>
-                    <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6' }}>
-                        Tu lugar para la clase de muestra está asegurado el <strong>{selectedDate}</strong> a las <strong>{selectedSlot}</strong>.
+            <div className="booking-page-container">
+                <div className="booking-glass-card success-card">
+                    <div className="success-icon-container">
+                        <CheckCircle size={80} color="var(--color-success)" />
+                    </div>
+                    <h2 className="display-font accent-text">¡RESERVA CONFIRMADA!</h2>
+                    <div className="success-divider"></div>
+                    <p className="success-text">
+                        Tu lugar para la clase de muestra está asegurado. Nos vemos el:
                     </p>
-                    <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6', marginTop: '10px' }}>
-                        Te enviaremos un recordatorio por WhatsApp pronto.
+                    <div className="booking-summary-badge">
+                        <span>{selectedDate}</span>
+                        <span>•</span>
+                        <span>{selectedSlot} hrs</span>
+                    </div>
+                    <p className="success-subtext">
+                        Hemos recibido tu solicitud. Te contactaremos por WhatsApp para enviarte la ubicación y detalles finales. ¡Prepárate para el reto!
                     </p>
-                    <button className="btn-primary" style={{ marginTop: '20px', width: '100%', justifyContent: 'center' }} onClick={() => window.location.href = '/'}>
-                        Volver al Inicio
+                    <button className="btn-primary" style={{ marginTop: '30px', width: '100%', height: '54px' }} onClick={() => window.location.href = '/'}>
+                        VOLVER AL INICIO
                     </button>
+                    <p style={{ marginTop: '20px', fontSize: '10px', color: 'rgba(255,255,255,0.3)', letterSpacing: '2px' }}>
+                        POWERED BY DIABOLICAL ENGINE
+                    </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--color-bg-main)', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ padding: '15px', display: 'flex', justifyContent: 'center', borderBottom: '1px solid var(--color-glass)' }}>
-                <div style={{ maxWidth: '140px' }}>
+        <div className="booking-page-container">
+            <header className="booking-header animate-fade-in" style={{ padding: '15px 0', marginBottom: '10px' }}>
+                <div style={{ width: '60px', cursor: 'pointer', filter: 'grayscale(1) brightness(2)' }} onClick={() => window.location.href = '/'}>
                     <Logo animated={false} />
                 </div>
             </header>
 
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '15px 10px' }}>
-                <div className="glass-panel" style={{ maxWidth: '600px', width: '100%', padding: '20px 15px' }}>
-                    <h2 style={{ textAlign: 'center', fontSize: '22px', marginBottom: '10px' }}>Reserva tu Clase de Muestra</h2>
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '20px', fontSize: '14px' }}>Selecciona un horario disponible en tiempo real.</p>
+            <main className="booking-main">
+                <div className="booking-glass-card">
+                    {/* Header del Card */}
+                    <div className="card-header-booking">
+                        <div className="step-indicator">
+                            <div className={`step-dot ${status === 'selection' ? 'active' : 'completed'}`}></div>
+                            <div className="step-line"></div>
+                            <div className={`step-dot ${status === 'form' ? 'active' : ''}`}></div>
+                        </div>
+                        <h1 className="display-font card-title">
+                            {status === 'selection' ? 'RESERVA TU CLASE' : 'TUS DATOS'}
+                        </h1>
+                        <p className="card-subtitle">
+                            {status === 'selection' 
+                                ? 'Selecciona el momento ideal para tu entrenamiento inicial.' 
+                                : 'Completa tu registro para asegurar tu lugar.'}
+                        </p>
+                    </div>
 
-                    {status === 'selection' && (
-                        <div className="animate-fade-in">
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CalendarIcon size={18} /> Día de la clase</label>
-                                <input 
-                                    type="date" 
-                                    className="form-input" 
-                                    value={selectedDate} 
-                                    min={new Date().toISOString().split('T')[0]}
-                                    onChange={(e) => setSelectedDate(e.target.value)} 
-                                />
+                    {status === 'selection' ? (
+                        <div className="animate-fade-in section-content">
+                            <div className="booking-form-group">
+                                <label className="booking-label">
+                                    <CalendarIcon size={16} /> ELIGE EL DÍA
+                                </label>
+                                <div className="date-input-wrapper">
+                                    <input 
+                                        type="date" 
+                                        className="booking-input" 
+                                        value={selectedDate} 
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setSelectedDate(e.target.value)} 
+                                    />
+                                </div>
                             </div>
 
-                            <p style={{ marginBottom: '15px', color: 'var(--color-text-muted)' }}>Horarios Disponibles</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px', marginBottom: '30px' }}>
-                                {availableSlots.length > 0 ? availableSlots.map(slot => (
-                                    <button 
-                                        key={slot}
-                                        onClick={() => setSelectedSlot(slot)}
-                                        style={{ 
-                                            padding: '15px', 
-                                            background: selectedSlot === slot ? 'var(--color-accent-orange)' : 'var(--color-glass)',
-                                            color: selectedSlot === slot ? 'black' : 'white',
-                                            border: '1px solid var(--color-glass-border)',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            transition: '0.2s'
-                                        }}
-                                    >
-                                        <Clock size={16} /> {slot}
-                                    </button>
-                                )) : (
-                                    <div style={{ gridColumn: 'span 3', textAlign: 'center', padding: '20px', color: 'var(--color-danger)' }}>
-                                        No hay cupos disponibles. Intenta otro día.
+                            <label className="booking-label" style={{ marginTop: '20px', marginBottom: '15px' }}>
+                                <Clock size={16} /> HORARIOS DISPONIBLES
+                            </label>
+                            
+                            <div className="slots-grid">
+                                {availableSlots.length > 0 ? (
+                                    availableSlots.map(slot => (
+                                        <button 
+                                            key={slot}
+                                            onClick={() => setSelectedSlot(slot)}
+                                            className={`slot-pill ${selectedSlot === slot ? 'selected' : ''}`}
+                                        >
+                                            {slot}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="no-slots-message">
+                                        No hay cupos disponibles para este día. Por favor elige otra fecha.
                                     </div>
                                 )}
                             </div>
 
-                            <button 
-                                className="btn-primary" 
-                                style={{ width: '100%', justifyContent: 'center', padding: '15px' }}
-                                disabled={!selectedSlot}
-                                onClick={() => setStatus('form')}
-                            >
-                                Continuar
-                            </button>
+                            <div className="action-footer">
+                                <button 
+                                    className="btn-primary main-booking-btn"
+                                    disabled={!selectedSlot}
+                                    onClick={nextStep}
+                                >
+                                    CONTINUAR
+                                </button>
+                            </div>
                         </div>
-                    )}
-
-                    {status === 'form' && (
-                        <form className="animate-fade-in" onSubmit={handleBooking} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ background: 'rgba(255, 115, 0, 0.1)', border: '1px solid var(--color-accent-orange)', padding: '15px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Tu reserva:</div>
-                                    <div style={{ fontWeight: 'bold' }}>{selectedDate} a las {selectedSlot}</div>
-                                </div>
-                                <button type="button" onClick={() => setStatus('selection')} style={{ background: 'none', border: 'none', color: 'var(--color-accent-orange)', cursor: 'pointer', textDecoration: 'underline' }}>Cambiar</button>
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '10px' }}>
-                                <label style={{ fontSize: '13px' }}>Nombre Completo</label>
-                                <input required type="text" className="form-input" placeholder="Ej. Carlos Martínez" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ height: '40px' }} />
-                            </div>
-                            <div className="form-group" style={{ marginBottom: '10px' }}>
-                                <label style={{ fontSize: '13px' }}>Teléfono (WhatsApp)</label>
-                                <input required type="tel" className="form-input" placeholder="+52 ..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} style={{ height: '40px' }} />
-                            </div>
-                            <div className="form-group" style={{ marginBottom: '10px' }}>
-                                <label style={{ fontSize: '13px' }}>Correo Electrónico</label>
-                                <input required type="email" className="form-input" placeholder="correo@ejemplo.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{ height: '40px' }} />
-                            </div>
-
-                            <button className="btn-primary" type="submit" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '10px', fontSize: '16px' }}>
-                                Confirmar Clase de Muestra
+                    ) : (
+                        <form className="animate-fade-in section-content" onSubmit={handleBooking}>
+                            <button type="button" onClick={prevStep} className="back-link">
+                                <ChevronLeft size={16} /> Ir atrás
                             </button>
+
+                            <div className="booking-review">
+                                <span className="review-label">TU ELECCIÓN:</span>
+                                <span className="review-value">{selectedDate} @ {selectedSlot}</span>
+                            </div>
+
+                            <div className="booking-form-group">
+                                <label className="booking-label"><User size={14} /> NOMBRE COMPLETO</label>
+                                <input 
+                                    required 
+                                    type="text" 
+                                    className="booking-input" 
+                                    placeholder="Nombre Apellido" 
+                                    value={formData.name} 
+                                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                                />
+                            </div>
+
+                            <div className="booking-form-group">
+                                <label className="booking-label"><Phone size={14} /> WHATSAPP</label>
+                                <input 
+                                    required 
+                                    type="tel" 
+                                    className="booking-input" 
+                                    placeholder="+52 000 000 0000" 
+                                    value={formData.phone} 
+                                    onChange={e => setFormData({...formData, phone: e.target.value})} 
+                                />
+                                <span className="input-hint">Usaremos este número para confirmar tu asistencia.</span>
+                            </div>
+
+                            <div className="booking-form-group">
+                                <label className="booking-label"><Mail size={14} /> CORREO ELECTRÓNICO</label>
+                                <input 
+                                    required 
+                                    type="email" 
+                                    className="booking-input" 
+                                    placeholder="tu@correo.com" 
+                                    value={formData.email} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                                />
+                            </div>
+
+                            <div className="action-footer">
+                                <button 
+                                    className="btn-primary main-booking-btn shadow-glow" 
+                                    type="submit" 
+                                    disabled={loading}
+                                >
+                                    {loading ? 'PROCESANDO...' : 'CONFIRMAR MI CLASE'}
+                                </button>
+                            </div>
                         </form>
                     )}
                 </div>
-            </div>
+            </main>
+
+            <style>{`
+                .booking-page-container {
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,20,20,0.9) 100%), 
+                                url('/calisthenics_gym_premium_background_1773480690654.png');
+                    background-size: cover;
+                    background-position: center;
+                    background-attachment: fixed;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    color: white;
+                    padding: 20px 15px;
+                    font-family: 'Inter', sans-serif;
+                }
+
+                .booking-header {
+                    width: 100%;
+                    max-width: 1200px;
+                    padding: 20px 0;
+                    display: flex;
+                    justify-content: center;
+                    margin-bottom: 20px;
+                }
+
+                .booking-main {
+                    flex: 1;
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .booking-glass-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    backdrop-filter: blur(25px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 24px;
+                    width: 100%;
+                    max-width: 480px;
+                    padding: 40px 30px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .booking-glass-card::before {
+                    content: '';
+                    position: absolute;
+                    top: -100px;
+                    right: -100px;
+                    width: 200px;
+                    height: 200px;
+                    background: radial-gradient(circle, rgba(255, 115, 0, 0.1) 0%, transparent 70%);
+                }
+
+                .card-title {
+                    font-size: 28px;
+                    letter-spacing: 2px;
+                    margin-bottom: 8px;
+                    background: linear-gradient(90deg, #fff, #ff7300);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+
+                .card-subtitle {
+                    color: rgba(255,255,255,0.5);
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+
+                .step-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 25px;
+                }
+
+                .step-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,0.1);
+                    transition: 0.3s;
+                }
+
+                .step-dot.active {
+                    background: var(--color-accent-orange);
+                    box-shadow: 0 0 10px var(--color-accent-orange);
+                }
+
+                .step-dot.completed {
+                    background: #fff;
+                }
+
+                .step-line {
+                    height: 1px;
+                    width: 40px;
+                    background: rgba(255,255,255,0.1);
+                }
+
+                .section-content {
+                    margin-top: 35px;
+                }
+
+                .booking-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 1.5px;
+                    color: rgba(255,255,255,0.4);
+                    margin-bottom: 12px;
+                }
+
+                .booking-input {
+                    width: 100%;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    padding: 14px 18px;
+                    border-radius: 12px;
+                    color: white;
+                    font-size: 15px;
+                    transition: 0.3s;
+                    outline: none;
+                }
+
+                .booking-input:focus {
+                    background: rgba(255,255,255,0.08);
+                    border-color: var(--color-accent-orange);
+                    box-shadow: 0 0 0 4px rgba(255, 115, 0, 0.1);
+                }
+
+                .slots-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    margin-bottom: 30px;
+                }
+
+                .slot-pill {
+                    padding: 12px;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 12px;
+                    color: white;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    text-align: center;
+                    font-size: 14px;
+                }
+
+                .slot-pill:hover {
+                    background: rgba(255,255,255,0.08);
+                    transform: translateY(-2px);
+                }
+
+                .slot-pill.selected {
+                    background: var(--color-accent-orange);
+                    color: black;
+                    border-color: var(--color-accent-orange);
+                    box-shadow: 0 10px 20px -10px rgba(255, 115, 0, 0.4);
+                }
+
+                .action-footer {
+                    margin-top: 40px;
+                }
+
+                .main-booking-btn {
+                    width: 100%;
+                    height: 56px;
+                    font-weight: 800;
+                    font-size: 16px;
+                    letter-spacing: 2px;
+                    border-radius: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .back-link {
+                    background: none;
+                    border: none;
+                    color: var(--color-accent-orange);
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    margin-bottom: 25px;
+                    padding: 0;
+                    opacity: 0.8;
+                    transition: 0.2s;
+                }
+
+                .back-link:hover {
+                    opacity: 1;
+                    transform: translateX(-3px);
+                }
+
+                .booking-review {
+                    background: rgba(255, 115, 0, 0.05);
+                    padding: 15px 20px;
+                    border-radius: 12px;
+                    border-left: 3px solid var(--color-accent-orange);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                    margin-bottom: 30px;
+                }
+
+                .review-label {
+                    font-size: 10px;
+                    color: var(--color-accent-orange);
+                    font-weight: 800;
+                    letter-spacing: 1px;
+                }
+
+                .review-value {
+                    font-weight: 700;
+                    font-size: 16px;
+                }
+
+                .input-hint {
+                    display: block;
+                    font-size: 11px;
+                    color: rgba(255,255,255,0.3);
+                    margin-top: 6px;
+                }
+
+                .no-slots-message {
+                    grid-column: span 3;
+                    text-align: center;
+                    padding: 30px;
+                    background: rgba(255, 0, 0, 0.05);
+                    border: 1px dashed rgba(255, 100, 100, 0.2);
+                    border-radius: 12px;
+                    color: rgba(255, 100, 100, 0.8);
+                    font-size: 13px;
+                }
+
+                .success-card {
+                    text-align: center;
+                    max-width: 440px;
+                }
+
+                .success-icon-container {
+                    margin-bottom: 30px;
+                    animation: bounce 2s infinite;
+                }
+
+                .success-divider {
+                    height: 2px;
+                    width: 60px;
+                    background: var(--color-accent-orange);
+                    margin: 20px auto;
+                }
+
+                .success-text {
+                    font-size: 16px;
+                    color: rgba(255,255,255,0.8);
+                    margin-bottom: 20px;
+                }
+
+                .booking-summary-badge {
+                    display: inline-flex;
+                    gap: 15px;
+                    background: rgba(255,255,255,0.05);
+                    padding: 10px 25px;
+                    border-radius: 30px;
+                    font-weight: 700;
+                    color: var(--color-accent-orange);
+                    font-size: 14px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .success-subtext {
+                    margin-top: 25px;
+                    font-size: 14px;
+                    color: rgba(255,255,255,0.4);
+                    line-height: 1.6;
+                }
+
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+
+                @media (max-width: 480px) {
+                    .booking-glass-card {
+                        padding: 30px 20px;
+                        border-radius: 0;
+                        background: transparent;
+                        backdrop-filter: none;
+                        border: none;
+                        box-shadow: none;
+                    }
+                    .booking-page-container {
+                        background: #000;
+                    }
+                    .slots-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                    .card-title {
+                        font-size: 24px;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
