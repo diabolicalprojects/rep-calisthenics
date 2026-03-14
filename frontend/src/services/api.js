@@ -17,12 +17,29 @@ const getAuthHeaders = () => {
 };
 
 export const api = {
-  // AUTH
+  // AUTH / USERS
   login: (data) => fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
+  
+  getUsers: () => fetch(`${API_URL}/users`, { headers: getAuthHeaders() }).then(handleResponse),
+  addUser: (data) => fetch(`${API_URL}/users`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updateUser: (id, data) => fetch(`${API_URL}/users/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteUser: (id) => fetch(`${API_URL}/users/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
 
   // MEMBERS
   getMembers: () => fetch(`${API_URL}/members`, { headers: getAuthHeaders() }).then(handleResponse),
@@ -124,4 +141,15 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+
+  // EXPENSES
+  getExpenses: () => fetch(`${API_URL}/expenses`, { headers: getAuthHeaders() }).then(handleResponse),
+  createExpense: (data) => fetch(`${API_URL}/expenses`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  
+  // NOTIFICATIONS
+  getNotifications: () => fetch(`${API_URL}/notifications`, { headers: getAuthHeaders() }).then(handleResponse),
 };

@@ -16,6 +16,9 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         biometrics: false,
         joinDate: today,
         cutoffDate: '',
+        isCustomPlan: false,
+        customPlanName: '',
+        customPlanPrice: '',
     });
     const [loading, setLoading] = useState(false);
     const sigCanvasRef = useRef(null);
@@ -56,8 +59,24 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
         }
         setLoading(true);
         try {
+            let planName = formData.plan;
+
+            // If it's a custom plan, create it first
+            if (formData.isCustomPlan) {
+                if (!formData.customPlanName || !formData.customPlanPrice) {
+                    throw new Error('Nombre y precio del plan son requeridos para planes personalizados.');
+                }
+                const newPlan = await api.addMembership({
+                    name: formData.customPlanName,
+                    price: parseFloat(formData.customPlanPrice),
+                    duration: 30 // Default 30 days
+                });
+                planName = newPlan.name;
+            }
+
             await api.addMember({
                 ...formData,
+                plan: planName, // Use the newly created plan name
                 lastVisit: null,
                 visitsCount: 0,
             });
@@ -171,12 +190,12 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                             )}
                             {plans.map(p => (
                                 <div key={p.id}
-                                    onClick={() => setFormData({ ...formData, plan: p.name })}
+                                    onClick={() => setFormData({ ...formData, plan: p.name, isCustomPlan: false })}
                                     style={{
                                         padding: '18px 20px',
                                         borderRadius: '10px',
-                                        border: formData.plan === p.name ? '2px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
-                                        background: formData.plan === p.name ? 'rgba(244,140,37,0.08)' : 'var(--color-glass)',
+                                        border: (formData.plan === p.name && !formData.isCustomPlan) ? '2px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
+                                        background: (formData.plan === p.name && !formData.isCustomPlan) ? 'rgba(244,140,37,0.08)' : 'var(--color-glass)',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -194,10 +213,53 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                         <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-accent-orange)' }}>
                                             ${p.price}
                                         </span>
-                                        {formData.plan === p.name && <Check size={16} color="var(--color-accent-orange)" />}
+                                        {(formData.plan === p.name && !formData.isCustomPlan) && <Check size={16} color="var(--color-accent-orange)" />}
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Option for Custom Plan */}
+                            <div 
+                                onClick={() => setFormData({ ...formData, isCustomPlan: true })}
+                                style={{
+                                    padding: '18px 20px',
+                                    borderRadius: '10px',
+                                    border: formData.isCustomPlan ? '2px solid var(--color-accent-orange)' : '1px dashed var(--color-glass-border)',
+                                    background: formData.isCustomPlan ? 'rgba(244,140,37,0.08)' : 'transparent',
+                                    cursor: 'pointer',
+                                    marginTop: '10px',
+                                    transition: 'all 0.2s',
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: formData.isCustomPlan ? '15px' : '0' }}>
+                                    <PenTool size={18} color={formData.isCustomPlan ? 'var(--color-accent-orange)' : 'var(--color-text-muted)'} />
+                                    <span style={{ fontWeight: 600, fontSize: '15px', color: formData.isCustomPlan ? 'var(--color-accent-orange)' : 'var(--color-text-muted)' }}>
+                                        {formData.isCustomPlan ? 'Configurando Plan Ad-hoc' : 'Crear un plan nuevo sobre la marcha'}
+                                    </span>
+                                    {formData.isCustomPlan && <Check size={16} color="var(--color-accent-orange)" style={{ marginLeft: 'auto' }} />}
+                                </div>
+
+                                {formData.isCustomPlan && (
+                                    <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '11px' }}>Nombre del Plan</label>
+                                            <input type="text" className="form-input" placeholder="Ej. Promoción Verano" 
+                                                value={formData.customPlanName} 
+                                                onChange={e => setFormData({ ...formData, customPlanName: e.target.value })}
+                                                onClick={e => e.stopPropagation()} 
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '11px' }}>Precio ($)</label>
+                                            <input type="number" className="form-input" placeholder="500" 
+                                                value={formData.customPlanPrice} 
+                                                onChange={e => setFormData({ ...formData, customPlanPrice: e.target.value })}
+                                                onClick={e => e.stopPropagation()} 
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 
@@ -222,7 +284,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                 lineHeight: '1.6',
                             }}>
                                 <strong style={{ color: 'var(--color-text-main)' }}>TÉRMINOS Y EXENCIÓN DE RESPONSABILIDAD</strong><br /><br />
-                                Al firmar, el usuario reconoce que participa en actividades deportivas de REP Calisthenics bajo su propio riesgo. Acepta respetar el reglamento interno y realizar los pagos puntuales del plan <strong>{formData.plan}</strong>. La membresía inicia el <strong>{formData.joinDate}</strong>.
+                                Al firmar, el usuario reconoce que participa en actividades deportivas de REP Calisthenics bajo su propio riesgo. Acepta respetar el reglamento interno y realizar los pagos puntuales del plan <strong>{formData.isCustomPlan ? formData.customPlanName : formData.plan}</strong>. La membresía inicia el <strong>{formData.joinDate}</strong>.
                             </div>
 
                             {/* Canvas */}
@@ -295,7 +357,8 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                     ['Nombre', formData.name],
                                     ['Email', formData.email],
                                     ['Teléfono', formData.phone],
-                                    ['Plan', formData.plan],
+                                    ['Plan', formData.isCustomPlan ? formData.customPlanName : formData.plan],
+                                    ['Precio Plan', formData.isCustomPlan ? `$${formData.customPlanPrice}` : 'S/D'],
                                     ['Ingreso', formData.joinDate],
                                     ['Corte', formData.cutoffDate],
                                 ].map(([label, value]) => (
@@ -331,7 +394,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                         <button className="btn-primary"
                             style={{ minHeight: '40px', display: 'flex', alignItems: 'center', gap: '6px' }}
                             onClick={handleNext}
-                            disabled={step === 1 && !isStep1Valid}
+                            disabled={(step === 1 && !isStep1Valid) || (step === 2 && formData.isCustomPlan && (!formData.customPlanName || !formData.customPlanPrice))}
                         >
                             Siguiente <ArrowRight size={15} />
                         </button>

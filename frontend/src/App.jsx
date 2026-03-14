@@ -18,6 +18,8 @@ import Memberships from './pages/Memberships';
 import Visits from './pages/Visits';
 import PublicBooking from './pages/PublicBooking';
 import Analytics from './pages/Analytics';
+import Users from './pages/Users';
+import Expenses from './pages/Expenses';
 import { MessageCircle, X as CloseIcon, Info } from 'lucide-react';
 
 function App() {
@@ -73,12 +75,14 @@ function App() {
                         <Route path="/pos" element={<POS />} />
                         <Route path="/rutinas" element={<Routines />} />
                         <Route path="/pagos" element={<Payments />} />
+                        <Route path="/gastos" element={<Expenses />} />
                         <Route path="/agenda" element={<Agenda />} />
                         <Route path="/inventario" element={<Inventory />} />
                         <Route path="/retencion" element={<Retention />} />
                         <Route path="/migracion" element={<Migration />} />
                         <Route path="/membresias" element={<Memberships />} />
                         <Route path="/visitas" element={<Visits />} />
+                        <Route path="/usuarios" element={<Users />} />
                         <Route path="/members" element={<Members />} />
                         <Route path="/inventory" element={<Inventory />} />
                         <Route path="/agenda" element={<Agenda />} />

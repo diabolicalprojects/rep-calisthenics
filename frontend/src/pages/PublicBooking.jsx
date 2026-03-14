@@ -73,8 +73,10 @@ const PublicBooking = () => {
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--color-bg-main)', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ padding: '20px', display: 'flex', justifyContent: 'center', borderBottom: '1px solid var(--color-glass)' }}>
-                <Logo animated={false} />
+            <header style={{ padding: '15px', display: 'flex', justifyContent: 'center', borderBottom: '1px solid var(--color-glass)' }}>
+                <div style={{ maxWidth: '140px' }}>
+                    <Logo animated={false} />
+                </div>
             </header>
 
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '15px 10px' }}>
@@ -96,7 +98,7 @@ const PublicBooking = () => {
                             </div>
 
                             <p style={{ marginBottom: '15px', color: 'var(--color-text-muted)' }}>Horarios Disponibles</p>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '30px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px', marginBottom: '30px' }}>
                                 {availableSlots.length > 0 ? availableSlots.map(slot => (
                                     <button 
                                         key={slot}

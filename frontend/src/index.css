@@ -132,7 +132,7 @@ svg {
 
 .btn-primary {
   background-color: var(--color-accent-orange);
-  color: #fff;
+  color: #000;
   padding: 10px 24px;
   font-weight: 600;
   display: inline-flex;
@@ -157,6 +157,16 @@ svg {
 
 .btn-ghost:hover {
   background: var(--color-glass-hover);
+}
+
+.active-tab {
+  background: #000 !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .active-tab {
+  background: #fff !important;
+  color: #000 !important;
 }
 
 .btn-google {

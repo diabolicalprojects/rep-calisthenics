@@ -70,15 +70,26 @@ const Dashboard = () => {
                     });
                 } catch(e) { console.error("Transactions error", e); }
 
+                // Fetch Expenses
+                let totalExpenses = 0;
+                try {
+                    const expenses = await api.getExpenses();
+                    expenses.forEach(ex => {
+                        totalExpenses += parseFloat(ex.amount) || 0;
+                    });
+                } catch(e) { console.error("Expenses error", e); }
+
                 setStats({
                     activeMembers: activeMembersCount,
-                    altas: altasCount || 2,
-                    bajas: bajasCount || 1,
+                    altas: altasCount || 0,
+                    bajas: bajasCount || 0,
                     monthlyRevenue: monthlyRevenue,
+                    totalExpenses: totalExpenses,
+                    netUtility: monthlyRevenue - totalExpenses,
                     pendingDebts: 0,
                     projectedRevenue: projected,
                     moneyAtRisk: riskMoney,
-                    growthRate: `${(altasCount > bajasCount ? '+' : '')}${altasCount - bajasCount}`,
+                    growthRate: `${(altasCount >= bajasCount ? '+' : '')}${altasCount - bajasCount}`,
                     topProducts: 'Agua, Proteína',
                     hoursDistribution: '18:00 - 20:00'
                 });
@@ -124,20 +135,20 @@ const Dashboard = () => {
 
                 <div className="glass-panel metric-card pulse-hover stagger-3" style={{ borderTop: '2px solid var(--color-success)' }}>
                     <div className="metric-header">
-                        <h3>Ingreso Facturado</h3>
-                        <div className="icon-wrapper green"><CreditCard size={20} /></div>
+                        <h3>Utilidad Real (Neto)</h3>
+                        <div className="icon-wrapper green"><BarChart3 size={20} /></div>
                     </div>
-                    <div className="metric-value">${loading ? '...' : stats.monthlyRevenue.toFixed(2)}</div>
-                    <p className="text-muted" style={{ fontSize: '11px', marginTop: '5px' }}>Procesado por POS Central</p>
+                    <div className="metric-value">${loading ? '...' : (stats.netUtility || 0).toFixed(2)}</div>
+                    <p className="text-muted" style={{ fontSize: '11px', marginTop: '5px' }}>Ingresos - Gastos registrados</p>
                 </div>
 
                 <div className="glass-panel metric-card pulse-hover stagger-4" style={{ borderTop: '2px solid var(--color-danger)' }}>
                     <div className="metric-header">
-                        <h3>Capital en Riesgo (Churn)</h3>
+                        <h3>Capital en Riesgo</h3>
                         <div className="icon-wrapper red"><ArrowDownRight size={20} /></div>
                     </div>
                     <div className="metric-value text-danger">${loading ? '...' : stats.moneyAtRisk}</div>
-                    <p className="text-muted" style={{ fontSize: '11px', marginTop: '5px' }}>Usuarios con &gt;15 días sin asistir</p>
+                    <p className="text-muted" style={{ fontSize: '11px', marginTop: '5px' }}>Socio con &gt;15 días de inactividad</p>
                 </div>
 
                 <div className="glass-panel metric-card pulse-hover stagger-5" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>

@@ -14,7 +14,18 @@ const Agenda = () => {
     const fetchAppointments = async () => {
         try {
             const data = await api.getAppointments(selectedDate);
-            setAppointments(data);
+            const parsedData = data.map(apt => {
+                let phone = null;
+                let email = null;
+                if (apt.notes) {
+                    const phoneMatch = apt.notes.match(/Teléfono:\s*([^,]+)/);
+                    const emailMatch = apt.notes.match(/Email:\s*(.+)/);
+                    if (phoneMatch && phoneMatch[1] !== 'N/A') phone = phoneMatch[1].trim();
+                     if (emailMatch && emailMatch[1] !== 'N/A') email = emailMatch[1].trim();
+                }
+                return { ...apt, phone, email };
+            });
+            setAppointments(parsedData);
         } catch (err) { console.error('Error fetching appointments:', err); }
     };
 
@@ -170,17 +181,43 @@ const Agenda = () => {
                             {appointments.filter(a => a.status === 'Pendiente').map(apt => (
                                 <div key={apt.id} className="glass-panel" style={{ padding: '16px', borderLeft: '4px solid #f48c25', background: 'rgba(244, 140, 37, 0.05)' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <span style={{ fontWeight: 'bold' }}>{apt.time}</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontWeight: 'bold' }}>{apt.time}</span>
+                                            <span style={{ fontSize: '11px', color: 'var(--color-accent-orange)' }}>{apt.date}</span>
+                                        </div>
                                         <span style={{ fontSize: '12px' }}>{apt.duration}</span>
                                     </div>
                                     <p style={{ fontSize: '15px', fontWeight: '500' }}>{apt.title}</p>
-                                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{apt.memberName}</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>{apt.memberName}</p>
+                                        {apt.phone && (
+                                            <button 
+                                                className="btn-ghost" 
+                                                style={{ padding: '4px', color: '#25D366' }} 
+                                                title="Contactar por WhatsApp"
+                                                onClick={() => {
+                                                    const msg = `Hola ${apt.memberName}, te escribimos de REP Calisthenics Academy sobre tu solicitud de clase para el ${apt.date} a las ${apt.time}...`;
+                                                    window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                }}
+                                            >
+                                                <MessageCircle size={16} />
+                                            </button>
+                                        )}
+                                    </div>
 
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         <button onClick={() => updateStatus(apt.id, 'Confirmada')} className="btn-primary" style={{ flex: 1, padding: '8px', background: 'var(--color-success)', color: 'black' }}>
                                             <Check size={16} style={{ margin: '0 auto' }} />
                                         </button>
-                                        <button onClick={() => updateStatus(apt.id, 'Cancelada')} className="btn-primary" style={{ flex: 1, padding: '8px', background: 'var(--color-danger)' }}>
+                                        <button onClick={() => {
+                                            if (apt.phone) {
+                                                if (window.confirm("¿Deseas enviar un WhatsApp para reagendar antes de cancelar la solicitud?")) {
+                                                    const msg = `Hola ${apt.memberName}, te escribimos de REP Calisthenics sobre tu solicitud de clase. Desafortunadamente ese horario no está disponible, ¿te gustaría reagendar para otro momento?`;
+                                                    window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                }
+                                            }
+                                            updateStatus(apt.id, 'Cancelada');
+                                        }} className="btn-primary" style={{ flex: 1, padding: '8px', background: 'var(--color-danger)' }}>
                                             <X size={16} style={{ margin: '0 auto' }} />
                                         </button>
                                     </div>

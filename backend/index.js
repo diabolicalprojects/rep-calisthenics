@@ -85,7 +85,32 @@ const initDB = async () => {
         }
       }
 
-      console.log('✅ Base de Datos y Roles actualizados (Bcrypt activado)');
+      // 5. EXPENSES TABLE
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          description TEXT NOT NULL,
+          amount DECIMAL(10,2) NOT NULL,
+          category TEXT,
+          date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          recorded_by UUID REFERENCES users(id)
+        );
+      `);
+
+      // 6. NOTIFICATIONS LOG
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS notifications_log (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          member_id UUID REFERENCES members(id),
+          member_name TEXT,
+          type TEXT, -- 'pre-expiration', 'expiration', 'overdue'
+          status TEXT DEFAULT 'pending', -- 'pending', 'sent'
+          message TEXT,
+          timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      console.log('✅ Base de Datos, Roles, Egresos y Logs actualizados');
     }
   } catch (err) {
     console.error('❌ Error inicializando la Base de Datos:', err);
@@ -276,15 +301,60 @@ app.post('/api/users/reveal-passwords', authenticateToken, authorize(['developer
 app.post('/api/users', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
   const { name, email, username, password, role, permissions } = req.body;
   try {
-    // Admins cannot create developers
     if (req.user.role === 'admin' && role === 'developer') {
       return res.status(403).json({ error: 'No tienes permiso para crear usuarios Developer' });
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       'INSERT INTO users (name, email, username, password, role, permissions) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, username, role',
-      [name, email, username, password, role, JSON.stringify(permissions || {})]
+      [name, email, username, hashedPassword, role, JSON.stringify(permissions || {})]
     );
     res.status(201).json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/users/:id', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
+  const { name, email, username, password, role, permissions } = req.body;
+  try {
+    const userToUpdate = await pool.query('SELECT role FROM users WHERE id = $1', [req.params.id]);
+    if (!userToUpdate.rows[0]) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (req.user.role === 'admin' && userToUpdate.rows[0].role === 'developer') {
+      return res.status(403).json({ error: 'No tienes permiso para editar a un Developer' });
+    }
+    if (req.user.role === 'admin' && role === 'developer') {
+      return res.status(403).json({ error: 'No tienes permiso para asignar el rol Developer' });
+    }
+
+    let query = 'UPDATE users SET name=$1, email=$2, username=$3, role=$4, permissions=$5';
+    let params = [name, email, username, role, JSON.stringify(permissions || {})];
+    
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += ', password=$6 WHERE id=$7 RETURNING id, name, username, role';
+      params.push(hashedPassword, req.params.id);
+    } else {
+      query += ' WHERE id=$6 RETURNING id, name, username, role';
+      params.push(req.params.id);
+    }
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/users/:id', authenticateToken, authorize(['developer', 'admin']), async (req, res) => {
+  try {
+    const userToDelete = await pool.query('SELECT role FROM users WHERE id = $1', [req.params.id]);
+    if (!userToDelete.rows[0]) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (req.user.role === 'admin' && userToDelete.rows[0].role === 'developer') {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar a un Developer' });
+    }
+    if (req.user.id === req.params.id) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+    }
+
+    await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.sendStatus(204);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -414,10 +484,54 @@ app.get('/api/transactions', async (req, res) => {
 
 app.post('/api/transactions', async (req, res) => {
   const { total_amount, payment_method, cashier_name, items, type } = req.body;
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+    
+    // Register transaction
+    const txResult = await client.query(
       'INSERT INTO transactions (total_amount, payment_method, cashier_name, items, type) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [total_amount, payment_method, cashier_name, JSON.stringify(items), type]
+    );
+
+    // Decrement inventory if applicable
+    if (items && Array.isArray(items)) {
+      for (const item of items) {
+        if (item.type === 'retail' || (!item.type && item.id)) {
+           // We assume item.id is valid for inventory. We use a partial name match or id if provided
+           // The POS currently sends item object from inventory, so it has id
+           await client.query(
+             'UPDATE inventory SET quantity = quantity - 1 WHERE id = $1 AND quantity > 0',
+             [item.id]
+           );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json(txResult.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// --- EXPENSES ---
+app.get('/api/expenses', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM expenses ORDER BY date DESC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/expenses', async (req, res) => {
+  const { description, amount, category, recorded_by } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO expenses (description, amount, category, recorded_by) VALUES ($1, $2, $3, $4) RETURNING *',
+      [description, amount, category, recorded_by]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -465,10 +579,10 @@ app.post('/api/visits', async (req, res) => {
 app.get('/api/appointments', async (req, res) => {
   const { date } = req.query;
   try {
-    let queryText = 'SELECT * FROM appointments ORDER BY time ASC';
+    let queryText = 'SELECT * FROM appointments ORDER BY date ASC, time ASC';
     let params = [];
     if (date) {
-      queryText = 'SELECT * FROM appointments WHERE date = $1 ORDER BY time ASC';
+      queryText = "SELECT * FROM appointments WHERE date = $1 OR status = 'Pendiente' ORDER BY date ASC, time ASC";
       params = [date];
     }
     const result = await pool.query(queryText, params);
@@ -533,9 +647,59 @@ app.delete('/api/routines/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// --- NOTIFICATIONS LOG ---
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM notifications_log ORDER BY timestamp DESC LIMIT 50');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- REVENUE PROJECTION & EXPIRATION CHECKER (DIABOLICAL ENGINE) ---
+const checkExpirations = async () => {
+  console.log('🔄 Diabolical Engine: Verificando expiraciones y renovaciones...');
+  try {
+    // 1. Members expiring in 3 days (Pre-warning)
+    const expiringSoon = await pool.query(`
+      SELECT m.id, m.name, m.email, m.phone, m.expiration_date 
+      FROM members m 
+      WHERE m.expiration_date = CURRENT_DATE + INTERVAL '3 days' 
+      AND m.status = 'Activo'
+      AND NOT EXISTS (SELECT 1 FROM notifications_log n WHERE n.member_id = m.id AND n.type = 'pre-expiration' AND n.timestamp > CURRENT_DATE - INTERVAL '1 day')
+    `);
+
+    for (const m of expiringSoon.rows) {
+      await pool.query(
+        'INSERT INTO notifications_log (member_id, member_name, type, message) VALUES ($1, $2, $3, $4)',
+        [m.id, m.name, 'pre-expiration', `Recordatorio: Tu membresía vence en 3 días (${m.expiration_date}).`]
+      );
+    }
+
+    // 2. Members expiring TODAY
+    const expiringToday = await pool.query(`
+      SELECT m.id, m.name, m.email, m.phone, m.expiration_date 
+      FROM members m 
+      WHERE m.expiration_date = CURRENT_DATE
+      AND m.status = 'Activo'
+      AND NOT EXISTS (SELECT 1 FROM notifications_log n WHERE n.member_id = m.id AND n.type = 'expiration' AND n.timestamp > CURRENT_DATE - INTERVAL '1 day')
+    `);
+
+    for (const m of expiringToday.rows) {
+      await pool.query(
+        'INSERT INTO notifications_log (member_id, member_name, type, message) VALUES ($1, $2, $3, $4)',
+        [m.id, m.name, 'expiration', `Aviso: Tu membresía vence HOY. Te esperamos para renovar.`]
+      );
+    }
+
+    console.log(`✅ Diabolical Engine: ${expiringSoon.rowCount + expiringToday.rowCount} avisos generados.`);
+  } catch (err) {
+    console.error('❌ Error en Diabolical Engine:', err.message);
+  }
+};
+
 // --- HEALTH CHECK ---
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Backend is reachable' });
+  res.json({ status: 'OK', message: 'Backend is reachable', version: APP_VERSION });
 });
 
 // --- SERVER STARTUP ---
@@ -546,6 +710,12 @@ app.listen(port, '0.0.0.0', async () => {
       await pool.query('SELECT 1');
       console.log('✅ DB connection OK');
       await initDB();
+      
+      // Run checker on startup
+      setTimeout(checkExpirations, 5000); 
+      // And every 12 hours
+      setInterval(checkExpirations, 1000 * 60 * 60 * 12);
+      
     } catch (err) {
       console.error('⚠️  DB not reachable at startup:', err.message);
     }

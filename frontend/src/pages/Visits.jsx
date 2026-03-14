@@ -58,6 +58,14 @@ const Visits = () => {
     }, []);
 
     const registerVisit = async (member) => {
+        const isSuspended = member.status !== 'Activo';
+        
+        if (isSuspended) {
+            if (!window.confirm(`⚠️ EL SOCIO ESTÁ ${member.status.toUpperCase()}\n\nFavor de solicitar pago o regularizar situación.\n\n¿Deseas permitir el acceso de todos modos?`)) {
+                return;
+            }
+        }
+
         try {
             await api.recordVisit({
                 memberId: member.id,
@@ -67,7 +75,10 @@ const Visits = () => {
             setShowModal(false);
             setSearchTerm('');
             fetchData();
-            alert(`✅ Visita registrada: ${member.name}`);
+            
+            // Success alert with distinct style
+            const msg = isSuspended ? `⚠ Acceso MANUAL para ${member.name}` : `✅ Visita registrada: ${member.name}`;
+            alert(msg);
         } catch (err) {
             console.error('Error registering visit:', err);
             alert('Error al registrar visita');

@@ -204,13 +204,13 @@ const POS = () => {
                 {/* Left Side: Items Selection */}
                 <div className="glass-panel" style={{ minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
                     <div className="pos-tabs-container" style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '15px', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
-                        <button className={`btn-ghost ${activeTab === 'retail' ? 'active-tab' : ''}`} style={{ flexShrink: 0, ...(activeTab === 'retail' ? { background: '#000', color: '#fff' } : {}) }} onClick={() => setActiveTab('retail')}>
+                        <button className={`btn-ghost ${activeTab === 'retail' ? 'active-tab' : ''}`} style={{ flexShrink: 0 }} onClick={() => setActiveTab('retail')}>
                             <ShoppingCart size={18} /> Tienda (Retail)
                         </button>
-                        <button className={`btn-ghost ${activeTab === 'subs' ? 'active-tab' : ''}`} style={{ flexShrink: 0, ...(activeTab === 'subs' ? { background: '#000', color: '#fff' } : {}) }} onClick={() => setActiveTab('subs')}>
+                        <button className={`btn-ghost ${activeTab === 'subs' ? 'active-tab' : ''}`} style={{ flexShrink: 0 }} onClick={() => setActiveTab('subs')}>
                             <User size={18} /> Suscripciones
                         </button>
-                        <button className={`btn-ghost ${activeTab === 'visits' ? 'active-tab' : ''}`} style={{ flexShrink: 0, ...(activeTab === 'visits' ? { background: '#000', color: '#fff' } : {}) }} onClick={() => setActiveTab('visits')}>
+                        <button className={`btn-ghost ${activeTab === 'visits' ? 'active-tab' : ''}`} style={{ flexShrink: 0 }} onClick={() => setActiveTab('visits')}>
                             <Ticket size={18} /> Accesos Únicos
                         </button>
                     </div>
