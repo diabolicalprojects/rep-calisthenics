@@ -3,7 +3,13 @@ const API_URL = import.meta.env.VITE_API_URL || '/api';
 const handleResponse = async (response) => {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Server Error' }));
-    throw new Error(error.error || 'Server Error');
+    let errorMessage = 'Server Error';
+    if (Array.isArray(error.error)) {
+      errorMessage = error.error.map(err => `${err.path ? err.path.join('.') + ': ' : ''}${err.message}`).join(', ');
+    } else if (typeof error.error === 'string') {
+      errorMessage = error.error;
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 };

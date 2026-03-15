@@ -14,6 +14,7 @@ const Retention = () => {
         reactivationPotential: 0
     });
     const [loading, setLoading] = useState(true);
+    const [notificationLogs, setNotificationLogs] = useState([]);
 
     const calculateRiskScore = (member, lastAttendanceDate) => {
         if (!lastAttendanceDate) return 100; // High risk if never attended
@@ -48,6 +49,10 @@ const Retention = () => {
                 moneyAtRisk: totalMoneyAtRisk,
                 reactivationPotential: atRisk.filter(m => m.status === 'Inactivo' || m.status === 'inactive').length
             });
+
+            // Fetch Notification Logs
+            const logs = await api.getNotifications();
+            setNotificationLogs(logs);
         } catch (error) {
             console.error("Error fetching retention data:", error);
         } finally {
@@ -237,7 +242,7 @@ const Retention = () => {
                                             </div>
                                         </td>
                                         <td className="text-muted" style={{ fontSize: '13px' }}>
-                                            {member.lastVisit ? new Date(member.lastVisit).toLocaleDateString() : 'Sin registros'}
+                                            {member.last_visit ? new Date(member.last_visit).toLocaleDateString() : 'Sin registros'}
                                         </td>
                                         <td>
                                             <button
@@ -317,6 +322,24 @@ const Retention = () => {
                                 <div style={{ fontWeight: '500', fontSize: '14px' }}>Churn Prevention</div>
                                 <div className="text-muted" style={{ fontSize: '12px' }}>Ofertas para rescatar ex-miembros.</div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div className="glass-panel" style={{ marginTop: '20px' }}>
+                        <h3 style={{ marginBottom: '15px', fontSize: '16px' }}>Bitácora de Eventos</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '400px', overflowY: 'auto' }}>
+                            {notificationLogs.length === 0 ? (
+                                <p className="text-muted" style={{ fontSize: '12px' }}>No hay registros de notificaciones.</p>
+                            ) : notificationLogs.map(log => (
+                                <div key={log.id} style={{ padding: '10px', borderBottom: '1px solid var(--color-glass-border)', fontSize: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                        <span style={{ fontWeight: 'bold' }}>{log.member_name}</span>
+                                        <span style={{ color: log.status === 'Error' ? 'var(--color-danger)' : 'var(--color-success)' }}>{log.status}</span>
+                                    </div>
+                                    <div style={{ color: 'var(--color-text-muted)' }}>{log.type} - {new Date(log.timestamp).toLocaleString()}</div>
+                                    {log.error && <div style={{ color: 'var(--color-danger)', marginTop: '4px', fontSize: '11px', background: 'rgba(255, 77, 79, 0.05)', padding: '4px', borderRadius: '4px' }}>Error: {log.error}</div>}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

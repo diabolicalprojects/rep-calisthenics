@@ -42,7 +42,7 @@ const Visits = () => {
         // Simple Top Member logic (from the loaded 50 visits for simplicity)
         const counts = {};
         visitsData.forEach(v => {
-            counts[v.memberName] = (counts[v.memberName] || 0) + 1;
+            counts[v.member_name] = (counts[v.member_name] || 0) + 1;
         });
         const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
 
@@ -221,8 +221,8 @@ const Visits = () => {
                                 <tr key={visit.id}>
                                     <td>
                                         <div className="user-cell">
-                                            <div className="avatar-small" style={{ background: 'rgba(244, 140, 37, 0.1)', color: 'var(--color-accent-orange)' }}>{visit.memberName.charAt(0)}</div>
-                                            <span style={{ fontWeight: '500' }}>{visit.memberName}</span>
+                                            <div className="avatar-small" style={{ background: 'rgba(244, 140, 37, 0.1)', color: 'var(--color-accent-orange)' }}>{visit.member_name ? visit.member_name.charAt(0) : 'U'}</div>
+                                            <span style={{ fontWeight: '500' }}>{visit.member_name}</span>
                                         </div>
                                     </td>
                                     <td><span className="text-muted">{visit.plan}</span></td>

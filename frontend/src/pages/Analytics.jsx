@@ -59,7 +59,7 @@ const Analytics = () => {
         try {
             /* MEMBERS */
             const members = await api.getMembers();
-            const active = members.filter(m => m.status === 'Activo').length;
+            const active = members.filter(m => m.status === 'Activo' || m.status === 'active').length;
             const total = members.length;
 
             // status donut

@@ -11,6 +11,35 @@
     padding: 32px 20px;
     z-index: 100;
     transition: transform 0.3s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-glass-border) transparent;
+}
+
+@media (max-width: 1200px) {
+    .sidebar { width: 260px; }
+}
+
+@media (max-width: 1024px) {
+    .sidebar { width: 240px; }
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--color-glass-border);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-orange);
 }
 
 .sidebar-header {
@@ -19,7 +48,7 @@
 }
 
 .logo-container h2 {
-    font-size: 24px;
+    font-size: 20px;
     color: var(--color-text-main);
     line-height: 1.2;
 }
@@ -86,8 +115,16 @@
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     padding: 8px 12px;
+    flex-wrap: wrap;
+}
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
 }
 
 .avatar {
@@ -170,6 +207,7 @@
         z-index: 9998;
         padding-top: 80px;
         overflow-y: auto;
+        box-sizing: border-box;
     }
 
     .sidebar.open {

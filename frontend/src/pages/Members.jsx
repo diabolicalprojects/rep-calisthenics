@@ -28,8 +28,8 @@ const daysSince = (val) => {
 
 /* ── Full Member Detail Modal ────────────────────── */
 const MemberDetailModal = ({ member, plans, onClose, onEdit, onDelete }) => {
-    const days = daysSince(member.lastVisit);
-    const riskLevel = !member.lastVisit ? 'Alta' : days > 30 ? 'Alta' : days > 15 ? 'Media' : 'Baja';
+    const days = daysSince(member.last_visit);
+    const riskLevel = !member.last_visit ? 'Alta' : days > 30 ? 'Alta' : days > 15 ? 'Media' : 'Baja';
     const riskColor = { Alta: 'var(--color-danger)', Media: 'var(--color-accent-orange)', Baja: 'var(--color-success)' }[riskLevel];
     const planPrice = plans.find(p => p.name === member.plan)?.price || '—';
 
@@ -119,11 +119,11 @@ const MemberDetailModal = ({ member, plans, onClose, onEdit, onDelete }) => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
                             {[
                                 { icon: Award, label: 'Plan', value: member.plan || '—' },
-                                { icon: Calendar, label: 'Ingreso', value: fmtDate(member.joinDate || member.createdAt) },
-                                { icon: Clock, label: 'Fecha de Corte', value: fmtDate(member.cutoffDate) },
+                                { icon: Calendar, label: 'Ingreso', value: fmtDate(member.join_date || member.created_at) },
+                                { icon: Clock, label: 'Fecha de Corte', value: fmtDate(member.expiration_date) },
                                 { icon: CheckCircle, label: 'Precio Mensual', value: planPrice !== '—' ? `$${planPrice}` : '—' },
-                                { icon: Activity, label: 'Visitas Totales', value: member.visitsCount ?? '—' },
-                                { icon: Clock, label: 'Última Visita', value: fmtDate(member.lastVisit) },
+                                { icon: Activity, label: 'Visitas Totales', value: member.visits_count ?? '—' },
+                                { icon: Clock, label: 'Última Visita', value: fmtDate(member.last_visit) },
                             ].map(({ icon: Icon, label, value }) => (
                                 <div key={label} style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)', borderRadius: 10, padding: '12px 14px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
@@ -156,13 +156,13 @@ const MemberDetailModal = ({ member, plans, onClose, onEdit, onDelete }) => {
                     <div>
                         <h4 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', marginBottom: 12 }}>Actividad Reciente</h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {member.lastVisit ? (
+                            {member.last_visit ? (
                                 <div style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)', borderRadius: 10, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-success)' }}></div>
                                         <span style={{ fontSize: 13 }}>Última entrada registrada</span>
                                     </div>
-                                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(member.lastVisit)}</span>
+                                    <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(member.last_visit)}</span>
                                 </div>
                             ) : null}
                             <div style={{ background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)', borderRadius: 10, padding: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -170,7 +170,7 @@ const MemberDetailModal = ({ member, plans, onClose, onEdit, onDelete }) => {
                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-accent-orange)' }}></div>
                                     <span style={{ fontSize: 13 }}>Pago de membresía: {member.plan}</span>
                                 </div>
-                                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(member.joinDate || member.createdAt)}</span>
+                                <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(member.join_date || member.created_at)}</span>
                             </div>
                         </div>
                     </div>
@@ -205,8 +205,8 @@ const MemberDetailModal = ({ member, plans, onClose, onEdit, onDelete }) => {
 
 /* ── Grid Card ───────────────────────────────────── */
 const MemberCard = ({ member, onClick }) => {
-    const days = daysSince(member.lastVisit);
-    const risk = !member.lastVisit ? 'danger' : days > 30 ? 'danger' : days > 15 ? 'orange' : 'success';
+    const days = daysSince(member.last_visit);
+    const risk = !member.last_visit ? 'danger' : days > 30 ? 'danger' : days > 15 ? 'orange' : 'success';
     const riskMap = { danger: 'var(--color-danger)', orange: 'var(--color-accent-orange)', success: 'var(--color-success)' };
 
     return (
@@ -249,7 +249,7 @@ const MemberCard = ({ member, onClick }) => {
             {/* Bottom row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-glass-border)', paddingTop: 12 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar size={10} /> {fmtDate(member.joinDate || member.createdAt)}
+                    <Calendar size={10} /> {fmtDate(member.join_date || member.created_at)}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Activity size={10} /> {days !== null ? `${days}d sin visita` : 'Sin visitas'}
@@ -483,7 +483,7 @@ const Members = () => {
                                         </td>
                                         <td style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>{m.email}</td>
                                         <td><span style={{ color: 'var(--color-accent-orange)', fontWeight: 500 }}>{m.plan}</span></td>
-                                        <td style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(m.joinDate || m.createdAt)}</td>
+                                        <td style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>{fmtDate(m.join_date || m.created_at)}</td>
                                         <td>
                                             <span style={{ background: `${statusColor(m.status)}22`, color: statusColor(m.status), border: `1px solid ${statusColor(m.status)}44`, borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>
                                                 {m.status}

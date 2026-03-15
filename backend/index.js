@@ -144,6 +144,7 @@ const initDB = async () => {
           recorded_by UUID REFERENCES users(id)
         );
       `);
+      await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`);
 
       // 6. NOTIFICATIONS LOG
       await pool.query(`
@@ -411,7 +412,7 @@ app.put('/api/members/:id', authenticateToken, async (req, res) => {
   const { name, email, phone, plan, status, expiration_date } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE members SET name=$1, email=$2, phone=$3, plan=$4, status=$5, expiration_date=$6 WHERE id=$7 RETURNING *',
+      'UPDATE members SET name=$1, email=$2, phone=$3, plan=$4, status=$5, expiration_date=$6, updated_at=NOW() WHERE id=$7 RETURNING *',
       [name, email, phone, plan, status, expiration_date, req.params.id]
     );
     res.json(result.rows[0]);

@@ -102,7 +102,7 @@ const Sidebar = () => {
                             <span className="name">Admin</span>
                             <span className="role">Gerente</span>
                         </div>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <div className="user-actions">
                             <ThemeToggle />
                             <button className="btn-ghost" onClick={handleLogout} style={{ padding: '5px', color: 'var(--color-danger)' }} title="Cerrar Sesión">
                                 <LogOut size={18} />

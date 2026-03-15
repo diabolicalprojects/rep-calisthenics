@@ -195,9 +195,19 @@ svg {
   width: calc(100% - 280px);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .main-content {
     padding: 24px;
+    margin-left: 260px;
+    width: calc(100% - 260px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 20px;
+    margin-left: 240px;
+    width: calc(100% - 240px);
   }
 }
 
