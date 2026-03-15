@@ -94,12 +94,12 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
             <div style={{
                 width: '100%',
                 maxWidth: '900px',
-                background: 'var(--color-bg-secondary, #111)',
+                background: 'var(--color-bg-secondary)',
                 border: '1px solid var(--color-glass-border)',
                 borderRadius: '24px',
                 overflow: 'hidden',
                 margin: '20px',
-                boxShadow: '0 40px 100px rgba(0,0,0,0.9)',
+                boxShadow: 'var(--shadow-md)',
                 animation: 'modal-appear 0.3s cubic-bezier(0.34,1.56,0.64,1)',
                 color: 'var(--color-text-main)',
                 display: 'flex',
@@ -250,7 +250,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                     </div>
 
                     {/* Right Column: Dates & Signature */}
-                    <div style={{ flex: 1, padding: '32px', background: 'rgba(0,0,0,0.2)', overflowY: 'auto' }}>
+                    <div style={{ flex: 1, padding: '32px', background: 'var(--color-glass)', overflowY: 'auto' }}>
                         
                         {/* Section: Dates */}
                         <div style={{ marginBottom: '32px' }}>
@@ -284,7 +284,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                             </div>
                             
                             <div style={{
-                                background: '#fafafa',
+                                background: 'white',
                                 borderRadius: '12px',
                                 border: '2px solid var(--color-glass-border)',
                                 height: '180px',
@@ -361,7 +361,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                 .form-input { 
                     background: var(--color-glass); 
                     border: 1px solid var(--color-glass-border);
-                    color: white;
+                    color: var(--color-text-main);
                     border-radius: 8px;
                     padding: 8px 12px;
                     width: 100%;

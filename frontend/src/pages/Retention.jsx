@@ -36,18 +36,22 @@ const Retention = () => {
             const atRisk = allMembers.map(m => {
                 const score = calculateRiskScore(m, m.last_visit);
                 return { ...m, riskScore: score };
-            }).filter(m => m.riskScore > 50 || m.status === 'Inactivo');
+            }).filter(m => m.riskScore > 50 || (m.status && m.status.toLowerCase() === 'inactivo'));
 
             const totalMoneyAtRisk = atRisk.reduce((acc, curr) => {
-                const planPrice = curr.plan === 'Mensual' ? 50 : curr.plan === 'Elite' ? 100 : 500;
-                return acc + (curr.status === 'active' || curr.status === 'Activo' ? planPrice : 0);
+                // Determine price based on plan name
+                const planName = (curr.plan || '').toLowerCase();
+                const planPrice = planName.includes('elite') ? 100 : planName.includes('mensual') ? 50 : 500;
+                
+                const isActive = curr.status && (curr.status.toLowerCase() === 'activo' || curr.status.toLowerCase() === 'active');
+                return acc + (isActive ? planPrice : 0);
             }, 0);
 
             setAtRiskMembers(atRisk);
             setMetrics({
-                totalAtRisk: atRisk.filter(m => m.status === 'active' || m.status === 'Activo').length,
+                totalAtRisk: atRisk.filter(m => m.status && (m.status.toLowerCase() === 'activo' || m.status.toLowerCase() === 'active')).length,
                 moneyAtRisk: totalMoneyAtRisk,
-                reactivationPotential: atRisk.filter(m => m.status === 'Inactivo' || m.status === 'inactive').length
+                reactivationPotential: atRisk.filter(m => m.status && (m.status.toLowerCase() === 'inactivo' || m.status.toLowerCase() === 'inactive')).length
             });
 
             // Fetch Notification Logs

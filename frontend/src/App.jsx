@@ -43,7 +43,7 @@ function App() {
     }
 
     if (authLoading && !isPublicRoute) {
-        return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-main)' }}>
+        return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg-main)', color: 'var(--color-text-main)' }}>
             <p style={{ color: 'var(--color-text-muted)' }}>Cargando sistema...</p>
         </div>;
     }

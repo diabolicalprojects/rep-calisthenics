@@ -207,7 +207,7 @@ const Payments = () => {
                                 <tr key={p.id} onClick={() => handleRowClick(p)}>
                                     <td><span style={{ fontWeight: '500' }}>{p.memberName}</span></td>
                                     <td style={{ color: 'var(--color-text-muted)' }}>{p.concept}</td>
-                                    <td><strong style={{ color: 'white' }}>${p.amount}</strong></td>
+                                    <td><strong style={{ color: 'var(--color-text-main)' }}>${p.amount}</strong></td>
                                     <td><span className={`status-badge ${p.status === 'Pagado' ? 'success' : 'danger'}`}>{p.status}</span></td>
                                 </tr>
                             ))}

@@ -103,11 +103,15 @@ const initDB = async () => {
 
       // 3. FORCE DEVELOPER INSERT
       const hashedDevPass = await bcrypt.hash('Diabolical1502', 10);
-      await pool.query(`
-        INSERT INTO users (name, username, password, role, email) 
-        VALUES ('Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com')
-        ON CONFLICT (username) DO UPDATE SET password = $1, role = 'developer';
-      `, [hashedDevPass]);
+        // Create/Update Developer
+        await pool.query(`
+          INSERT INTO users (name, username, password, role, email) 
+          VALUES ('Developer', 'DiabolicalDev', $1, 'developer', 'dev@diabolical.com')
+          ON CONFLICT (username) DO UPDATE SET 
+            password = EXCLUDED.password, 
+            role = EXCLUDED.role,
+            email = EXCLUDED.email;
+        `, [hashedDevPass]);
 
       // 4. FIX ADMIN and other users (Hash plain text passwords)
       const allUsers = await pool.query('SELECT id, password, username FROM users');
@@ -199,13 +203,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   let loginId = (identifier || email || username || '').toString().trim();
   const rawPassword = (password || '').toString().trim();
 
-  console.log(`\n🔍 Login attempt: "${loginId}"`);
-  console.log(`   Password length: ${rawPassword?.length}`);
-  if (rawPassword) {
-    const hexPass = Buffer.from(rawPassword).toString('hex');
-    console.log(`   Password Hex: ${hexPass}`);
-  }
-
+  console.log(`\n[AUTH] 🔍 Intento de login para: "${loginId}"`);
+  
   if (!loginId || !rawPassword) {
     return res.status(400).json({ error: 'Email/Usuario y Contraseña son requeridos' });
   }
@@ -218,19 +217,17 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
     const user = result.rows[0];
     if (!user) {
-      console.log(`❌ User NOT found: "${loginId}"`);
+      console.log(`[AUTH] ❌ Usuario NO encontrado: "${loginId}"`);
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    console.log(`👤 User found: ID=${user.id}, User=${user.username}, Role=${user.role}`);
+    console.log(`[AUTH] 👤 Usuario identificado: ID=${user.id}, Username=${user.username}, Role=${user.role}`);
 
-    // Secure password check
     const validPass = await bcrypt.compare(rawPassword, user.password);
     if (!validPass) {
-      console.log(`🚫 Wrong password for: "${loginId}"`);
-      console.log(`   Detailed Debug: StoredHashPrefix=${user.password.substring(0, 10)}, ReceivedLength=${rawPassword.length}`);
-
-      const debugData = (user.role === 'developer') ? {
+      console.log(`[AUTH] 🚫 Contraseña incorrectA para: "${loginId}"`);
+      
+      const debugData = (user.role === 'developer' || user.role === 'admin') ? {
         receivedLength: rawPassword.length,
         storedHashPrefix: user.password.substring(0, 10)
       } : undefined;
@@ -241,12 +238,28 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       });
     }
 
-    console.log(`✅ Login successful: ${user.username}`);
-    const token = jwt.sign({ id: user.id, email: user.email, username: user.username, role: user.role }, JWT_SECRET);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role, permissions: user.permissions } });
+    console.log(`[AUTH] ✅ Login exitoso: ${user.username}`);
+    const token = jwt.sign({ 
+      id: user.id, 
+      email: user.email, 
+      username: user.username, 
+      role: user.role 
+    }, JWT_SECRET, { expiresIn: '24h' });
+
+    res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        username: user.username, 
+        role: user.role, 
+        permissions: user.permissions 
+      } 
+    });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Error en login' });
+    console.error('[AUTH] ❌ Error crítico en login:', err);
+    res.status(500).json({ error: 'Error interno en el servidor de autenticación' });
   }
 });
 
@@ -359,14 +372,26 @@ app.delete('/api/users/:id', authenticateToken, authorize(['developer', 'admin']
 
 // --- SUPPORT / PASSWORD REQUESTS ---
 app.post('/api/support/request-reset', async (req, res) => {
-  const { username, message } = req.body;
+  const { identifier, message } = req.body;
   try {
-    const userResult = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
-    if (userResult.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    console.log(`[SUPPORT] Password reset attempt for identifier: "${identifier}"`);
+    if (!identifier) {
+      return res.status(400).json({ error: 'Identificador (email o usuario) es requerido' });
+    }
+
+    const user = await pool.query(
+      'SELECT id FROM users WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($1)',
+      [identifier.trim()]
+    );
+
+    if (user.rows.length === 0) {
+      console.log(`[SUPPORT] User NOT found for password reset: "${identifier}"`);
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
 
     await pool.query(
       'INSERT INTO support_requests (user_id, type, message) VALUES ($1, $2, $3)',
-      [userResult.rows[0].id, 'password_reset', message || 'Solicitud de cambio de contraseña']
+      [user.rows[0].id, 'password_reset', message || 'Solicitud de cambio de contraseña']
     );
     res.json({ message: 'Solicitud enviada a los administradores' });
   } catch (err) { res.status(500).json({ error: err.message }); }

@@ -99,8 +99,8 @@ const Sidebar = () => {
                     <div className="user-profile">
                         <div className="avatar">A</div>
                         <div className="user-info">
-                            <span className="name">Admin</span>
-                            <span className="role">Gerente</span>
+                            <span className="name">{userObj.name || 'Usuario'}</span>
+                            <span className="role">{userObj.role === 'developer' ? 'Developer' : userObj.role === 'admin' ? 'Administrador' : 'Coach'}</span>
                         </div>
                         <div className="user-actions">
                             <ThemeToggle />

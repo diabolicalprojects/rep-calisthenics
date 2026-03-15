@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Plus, X, Package, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { api } from '../services/api';
 import HelpTooltip from '../components/HelpTooltip';
