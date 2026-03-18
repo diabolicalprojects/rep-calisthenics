@@ -22,19 +22,16 @@ const ModuleMetricBar = ({ stats = [], moduleName = '' }) => {
             alignItems: 'center',
         }}>
             {stats.map((s, i) => (
-                <React.Fragment key={i}>
-                    {i > 0 && <div style={{ width: 1, height: 28, background: 'var(--color-glass-border)', flexShrink: 0 }} />}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 80 }}>
-                        <span style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{s.label}</span>
-                        <span style={{ fontSize: 20, fontWeight: 800, color: s.color || 'var(--color-accent-orange)', lineHeight: 1 }}>{s.value}</span>
-                        {s.trend !== undefined && (
-                            <span style={{ fontSize: 10, color: s.trend >= 0 ? 'var(--color-success)' : 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 2 }}>
-                                {s.trend >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                                {s.trend >= 0 ? '+' : ''}{s.trend}%
-                            </span>
-                        )}
-                    </div>
-                </React.Fragment>
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 'min(100px, 45%)', flex: 1 }}>
+                    <span style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{s.label}</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: s.color || 'var(--color-accent-orange)', lineHeight: 1 }}>{s.value}</span>
+                    {s.trend !== undefined && (
+                        <span style={{ fontSize: 10, color: s.trend >= 0 ? 'var(--color-success)' : 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {s.trend >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                            {s.trend >= 0 ? '+' : ''}{s.trend}%
+                        </span>
+                    )}
+                </div>
             ))}
 
             {/* Link to full analytics */}

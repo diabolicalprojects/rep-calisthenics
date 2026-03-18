@@ -1,41 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, X, Edit, Trash2, Key, KeyRound } from 'lucide-react';
+import { Shield, Plus, X, Edit, Trash2, KeyRound, Mail, User as UserIcon } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import HelpTooltip from '../components/HelpTooltip';
 import ConfirmModal from '../components/ConfirmModal';
+import BaseModal from '../components/BaseModal';
 
 const Users = () => {
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
-    const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: '', username: '', email: '', password: '', role: 'coach',
-        permissions: { members: false, pos: false, agenda: false }
+        permissions: { members: false, pos: false, agenda: false, inventory: false }
     });
 
-    const userObj = JSON.parse(localStorage.getItem('user') || '{}');
-    const isAdmin = userObj?.role === 'admin' || userObj?.role === 'developer';
-    const isDev = userObj?.role === 'developer';
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const isDev = currentUser?.role === 'developer';
+    const isAdmin = isDev || currentUser?.role === 'admin';
 
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const data = await api.getUsers();
             setUsers(data);
         } catch (err) {
             console.error('Error fetching users:', err);
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => { fetchUsers(); }, []);
 
     const handleEdit = (user) => {
         setEditingUser(user);
         setFormData({
             ...user,
-            password: '', // blank so we don't accidentally update it if left empty
+            password: '',
             permissions: typeof user.permissions === 'string' ? JSON.parse(user.permissions || '{}') : (user.permissions || {})
         });
         setShowModal(true);
@@ -53,21 +57,20 @@ const Users = () => {
             }
             setShowModal(false);
             setEditingUser(null);
-            await fetchUsers();
+            fetchUsers();
         } catch (err) {
-            console.error('Error saving user:', err);
-            alert('Error al guardar el usuario: ' + err.message);
+            alert('Error: ' + err.message);
         }
     };
 
     const handleDelete = async () => {
-        if (!confirmDelete.id) return;
+        if (!confirmDeleteId) return;
         try {
-            await api.deleteUser(confirmDelete.id);
-            setConfirmDelete({ open: false, id: null });
-            await fetchUsers();
+            await api.deleteUser(confirmDeleteId);
+            setConfirmDeleteId(null);
+            fetchUsers();
         } catch (err) {
-            alert('Error eliminando usuario: ' + err.message);
+            alert('Error: ' + err.message);
         }
     };
 
@@ -79,135 +82,74 @@ const Users = () => {
     };
 
     if (!isAdmin) {
-        return <div style={{ padding: '40px', textAlign: 'center' }}>Acceso Denegado</div>;
+        return <div style={{ padding: '80px 40px', textAlign: 'center', opacity: 0.5 }}>No tienes permisos para ver esta sección.</div>;
     }
 
     return (
-        <div className="animate-fade-in" style={{ padding: '0px', maxWidth: '1000px', margin: '0 auto' }}>
-            <header className="page-header" style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <h1 className="page-title">Gestión de Usuarios</h1>
-                    <HelpTooltip 
-                        title="Control de Accesos"
-                        content="Administra las cuentas de tu staff. Dale acceso total, o restringe funciones como cobros y agenda utilizando los switches de permisos."
-                    />
+        <div className="animate-fade-in">
+            <header className="page-header stagger-1 flex-responsive">
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <h1 className="page-title">Gestión de Staff</h1>
+                        <HelpTooltip title="Accesos" content="Administra las cuentas de tu staff y define sus permisos específicos." />
+                    </div>
+                    <p className="page-subtitle text-muted">Control de acceso y roles del sistema</p>
                 </div>
-                <button className="btn-primary pulse-animation" onClick={() => { setEditingUser(null); setFormData({ name: '', username: '', email: '', password: '', role: 'coach', permissions: {} }); setShowModal(true); }}>
+                <button className="btn-primary" onClick={() => { 
+                    setEditingUser(null); 
+                    setFormData({ name: '', username: '', email: '', password: '', role: 'coach', permissions: {} }); 
+                    setShowModal(true); 
+                }}>
                     <Plus size={18} /> Nuevo Usuario
                 </button>
             </header>
 
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="glass-panel modal-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                            <h2 style={{ fontSize: '20px' }}>{editingUser ? 'Editar Usuario' : 'Crear Usuario'}</h2>
-                            <button onClick={() => setShowModal(false)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Nombre Completo</label>
-                                <input required type="text" className="form-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Usuario (ID)</label>
-                                    <input required type="text" className="form-input" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Email</label>
-                                    <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
-                                    <KeyRound size={14} /> Contraseña {editingUser ? '(Solo llenar para cambiarla)' : ''}
-                                </label>
-                                <input type="password" required={!editingUser} className="form-input" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', color: 'var(--color-text-muted)' }}>Rol <Shield size={12} /></label>
-                                <select className="form-input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                                    <option value="coach">Staff / Coach</option>
-                                    <option value="admin">Administrador (Gerente)</option>
-                                    {isDev && <option value="developer">Developer</option>}
-                                </select>
-                            </div>
-
-                            {formData.role === 'coach' && (
-                                <div style={{ background: 'var(--color-bg-secondary)', padding: '15px', borderRadius: '12px', border: '1px solid var(--color-glass-border)' }}>
-                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '14px', fontWeight: 'bold' }}>Permisos del Staff</label>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={!!formData.permissions.agenda} onChange={() => togglePermission('agenda')} style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent-orange)' }} />
-                                            Gestionar Agenda
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={!!formData.permissions.pos} onChange={() => togglePermission('pos')} style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent-orange)' }} />
-                                            Cobrar (POS)
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={!!formData.permissions.members} onChange={() => togglePermission('members')} style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent-orange)' }} />
-                                            Gestionar Miembros
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={!!formData.permissions.inventory} onChange={() => togglePermission('inventory')} style={{ width: '18px', height: '18px', accentColor: 'var(--color-accent-orange)' }} />
-                                            Gestionar Inventario
-                                        </label>
-                                    </div>
-                                </div>
-                            )}
-
-                            <button type="submit" className="btn-primary" style={{ marginTop: '20px', padding: '15px', justifyContent: 'center' }}>
-                                Guardar Usuario
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+            <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', marginTop: 32 }}>
                 <div className="table-container">
-                    <table className="modern-table" style={{ width: '100%' }}>
+                    <table className="modern-table">
                         <thead>
                             <tr>
-                                <th>Nombre</th>
-                                <th>Usuario / Email</th>
-                                <th>Rol</th>
-                                <th>Acciones</th>
+                                <th>Nombre / Info</th>
+                                <th>Usuario @</th>
+                                <th>Rol del Sistema</th>
+                                <th style={{ textAlign: 'right' }}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map(u => (
+                            {loading ? (
+                                <tr><td colSpan="4" style={{ textAlign: 'center', padding: 50 }}>Cargando usuarios...</td></tr>
+                            ) : users.map(u => (
                                 <tr key={u.id}>
-                                    <td><span style={{ fontWeight: 'bold' }}>{u.name}</span></td>
-                                    <td>
-                                        <span style={{ color: 'var(--color-accent-orange)', display: 'block' }}>@{u.username}</span>
-                                        <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{u.email}</span>
+                                    <td data-label="Nombre">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--color-bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <UserIcon size={18} />
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 700 }}>{u.name}</div>
+                                                <div style={{ fontSize: 12, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    <Mail size={12} /> <span className="hide-mobile">{u.email || 'Sin email'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td>
-                                        <span className={`status-badge ${u.role === 'developer' ? 'success' : u.role === 'admin' ? 'warning' : ''}`} style={u.role === 'coach' ? { background: '#333', color: '#fff' } : {}}>
+                                    <td data-label="Usuario" style={{ color: 'var(--color-accent-orange)', fontWeight: 600 }}>@{u.username}</td>
+                                    <td data-label="Rol">
+                                        <span className={`status-badge ${u.role === 'developer' ? 'success' : u.role === 'admin' ? 'warning' : ''}`} 
+                                              style={u.role === 'coach' ? { background: '#222', color: '#999' } : {}}>
                                             {u.role.toUpperCase()}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button 
-                                                className="btn-ghost" 
-                                                style={{ color: '#4da6ff', padding: '5px' }} 
-                                                onClick={() => handleEdit(u)}
-                                                disabled={(!isDev && u.role === 'developer')}
-                                            >
+                                    <td data-label="Acciones">
+                                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                            <button className="btn-ghost" 
+                                                    onClick={() => handleEdit(u)}
+                                                    disabled={!isDev && u.role === 'developer'}>
                                                 <Edit size={16} />
                                             </button>
-                                            <button 
-                                                className="btn-ghost" 
-                                                style={{ color: 'var(--color-danger)', padding: '5px' }} 
-                                                onClick={() => setConfirmDelete({ open: true, id: u.id })}
-                                                disabled={(!isDev && u.role === 'developer') || u.id === userObj.id}
-                                            >
+                                            <button className="btn-ghost" style={{ color: 'var(--color-danger)' }}
+                                                    onClick={() => setConfirmDeleteId(u.id)}
+                                                    disabled={(!isDev && u.role === 'developer') || u.id === currentUser?.id}>
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
@@ -219,13 +161,66 @@ const Users = () => {
                 </div>
             </div>
 
+            {showModal && (
+                <BaseModal isOpen={showModal} onClose={() => setShowModal(false)} title={editingUser ? 'Editar Staff' : 'Registrar Nuevo Staff'}>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                        <div className="form-group">
+                            <label>Nombre Completo</label>
+                            <input required className="form-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                        </div>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                            <div className="form-group">
+                                <label>Usuario (ID)</label>
+                                <input required className="form-input" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input type="email" className="form-input" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <KeyRound size={14} /> Contraseña {editingUser && '(Dejar vacío para mantener)'}
+                            </label>
+                            <input type="password" required={!editingUser} className="form-input" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Rol asignado</label>
+                            <select className="form-input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                                <option value="coach">Coach / Instructor</option>
+                                <option value="admin">Administrador / Gerente</option>
+                                {isDev && <option value="developer">Developer</option>}
+                            </select>
+                        </div>
+
+                        {formData.role === 'coach' && (
+                            <div style={{ background: 'rgba(255,115,0,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,115,0,0.1)' }}>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-accent-orange)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Permisos específicos</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                    {['agenda', 'pos', 'members', 'inventory'].map(perm => (
+                                        <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+                                            <input type="checkbox" checked={!!formData.permissions[perm]} onChange={() => togglePermission(perm)} style={{ width: 18, height: 18, accentColor: 'var(--color-accent-orange)' }} />
+                                            {perm === 'pos' ? 'Cobros (Punto de Venta)' : perm === 'members' ? 'Miembros' : perm.charAt(0).toUpperCase() + perm.slice(1)}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <button type="submit" className="btn-primary" style={{ marginTop: 10 }}>Guardar Cambios</button>
+                    </form>
+                </BaseModal>
+            )}
+
             <ConfirmModal 
-                isOpen={confirmDelete.open}
-                title="¿Eliminar Usuario?"
-                message="Esta acción revocará permanentemente el acceso de este usuario al sistema. Esta acción no se puede deshacer."
-                confirmText="Eliminar acceso"
+                isOpen={!!confirmDeleteId}
+                title="¿Eliminar Acceso Staff?"
+                message="Este usuario ya no podrá ingresar al sistema. Las transacciones registradas por este usuario se mantendrán para auditoría."
                 onConfirm={handleDelete}
-                onCancel={() => setConfirmDelete({ open: false, id: null })}
+                onCancel={() => setConfirmDeleteId(null)}
                 type="danger"
             />
         </div>

@@ -1,43 +1,52 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Dumbbell, CreditCard, Calendar, Menu, X, Package, LogOut, ShieldAlert, Database, Award, UserCheck, BarChart2, ArrowDownCircle } from 'lucide-react';
+import { 
+    Home, Users, Dumbbell, CreditCard, Calendar, Menu, X, 
+    Package, LogOut, ShieldAlert, Database, Award, 
+    UserCheck, BarChart2, ArrowDownCircle, Info 
+} from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
+import { useAuth } from '../context/AuthContext';
+import { initials } from '../utils/formatters';
 import './Sidebar.css';
 
-const Sidebar = () => {
+const Sidebar = ({ onShowDemo }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const userObj = JSON.parse(localStorage.getItem('user') || '{}');
+    const { user, logout, isAdmin } = useAuth();
 
     const navItems = [
         { path: '/', name: 'Dashboard', icon: <Home size={20} /> },
-        { path: '/analytics', name: 'Centro de Métricas', icon: <BarChart2 size={20} /> },
+        { path: '/analytics', name: 'Métricas', icon: <BarChart2 size={20} /> },
         { path: '/pos', name: 'Punto de Venta', icon: <CreditCard size={20} /> },
         { path: '/retencion', name: 'Retención (IA)', icon: <ShieldAlert size={20} /> },
         { path: '/visitas', name: 'Visitas', icon: <UserCheck size={20} /> },
-        { path: '/agenda', name: 'Agenda / Citas', icon: <Calendar size={20} /> },
+        { path: '/agenda', name: 'Agenda', icon: <Calendar size={20} /> },
         { path: '/miembros', name: 'Miembros', icon: <Users size={20} /> },
         { path: '/pagos', name: 'Historial Pagos', icon: <CreditCard size={20} /> },
-        { path: '/gastos', name: 'Gastos / Egresos', icon: <ArrowDownCircle size={20} /> },
+        { path: '/gastos', name: 'Gastos', icon: <ArrowDownCircle size={20} /> },
         { path: '/rutinas', name: 'Rutinas', icon: <Dumbbell size={20} /> },
         { path: '/inventario', name: 'Inventario', icon: <Package size={20} /> },
         { path: '/membresias', name: 'Membresías', icon: <Award size={20} /> },
         { path: '/migracion', name: 'Migración', icon: <Database size={20} /> }
     ];
 
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        window.location.reload();
+    const getPermissions = () => {
+        if (!user) return {};
+        if (typeof user.permissions === 'string') {
+            try { return JSON.parse(user.permissions); } catch (e) { return {}; }
+        }
+        return user.permissions || {};
     };
+
+    const permissions = getPermissions();
 
     return (
         <>
-            <button className="mobile-menu-btn" onClick={() => setIsOpen(!isOpen)}>
+            <button className="mobile-menu-btn" onClick={() => setIsOpen(!isOpen)} aria-label="Abrir menú">
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
-            {/* Overlay for mobile to close sidebar when clicking outside */}
             {isOpen && <div className="sidebar-overlay" onClick={() => setIsOpen(false)}></div>}
 
             <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -51,19 +60,13 @@ const Sidebar = () => {
                     <ul>
                         {navItems
                             .filter(item => {
-                                // Admin and Dev see everything
-                                if (userObj?.role === 'admin' || userObj?.role === 'developer') return true;
-                                // Coach sees specific items based on permissions
-                                // If they don't have permissions object, default to Dashboard only
-                                const perms = typeof userObj?.permissions === 'string' ? JSON.parse(userObj.permissions || '{}') : (userObj?.permissions || {});
-                                
+                                if (isAdmin) return true;
                                 switch(item.path) {
-                                    case '/': return true; // Everyone sees Dashboard
-                                    case '/agenda': return perms.agenda;
-                                    case '/pos': return perms.pos;
-                                    case '/miembros': return perms.members;
-                                    case '/inventario': return perms.inventory;
-                                    // other routes hidden for staff by default, unless specified
+                                    case '/': return true;
+                                    case '/agenda': return permissions.agenda;
+                                    case '/pos': return permissions.pos;
+                                    case '/miembros': return permissions.members;
+                                    case '/inventario': return permissions.inventory;
                                     default: return false;
                                 }
                             })
@@ -80,7 +83,7 @@ const Sidebar = () => {
                                 </li>
                             ))}
                         
-                        {(userObj?.role === 'admin' || userObj?.role === 'developer') && (
+                        {isAdmin && (
                             <li>
                                 <NavLink
                                     to="/usuarios"
@@ -96,15 +99,33 @@ const Sidebar = () => {
                 </nav>
 
                 <div className="sidebar-footer">
+                    {user?.role === 'developer' && (
+                        <button 
+                            className="nav-link btn-ghost" 
+                            onClick={onShowDemo}
+                            style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '10px', color: 'var(--color-accent-orange)' }}
+                        >
+                            <span className="nav-icon"><Info size={20} /></span>
+                            <span className="nav-text">Ver Demo Info</span>
+                        </button>
+                    )}
                     <div className="user-profile">
-                        <div className="avatar">A</div>
+                        <div className="avatar">{initials(user?.name)[0]}</div>
                         <div className="user-info">
-                            <span className="name">{userObj.name || 'Usuario'}</span>
-                            <span className="role">{userObj.role === 'developer' ? 'Developer' : userObj.role === 'admin' ? 'Administrador' : 'Coach'}</span>
+                            <span className="name">{user?.name || 'Usuario'}</span>
+                            <span className="role">
+                                {user?.role === 'developer' ? 'Developer' : user?.role === 'admin' ? 'Administrador' : 'Coach'}
+                            </span>
                         </div>
                         <div className="user-actions">
                             <ThemeToggle />
-                            <button className="btn-ghost" onClick={handleLogout} style={{ padding: '5px', color: 'var(--color-danger)' }} title="Cerrar Sesión">
+                            <button 
+                                className="btn-ghost" 
+                                onClick={logout} 
+                                style={{ padding: '5px', color: 'var(--color-danger)' }} 
+                                title="Cerrar Sesión"
+                                aria-label="Cerrar sesión"
+                            >
                                 <LogOut size={18} />
                             </button>
                         </div>

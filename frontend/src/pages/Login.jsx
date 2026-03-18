@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import Logo from '../components/Logo';
 import { LogIn, AlertCircle, ShieldCheck, Lock, User as UserIcon } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+    const { login } = useAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -16,9 +18,8 @@ const Login = () => {
 
         try {
             const response = await api.login({ identifier: username, password });
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            window.location.reload();
+            login(response.user, response.token);
+            // After login, AuthContext state changes, App.jsx will re-render and show Dashboard
         } catch (err) {
             console.error('Login Error:', err);
             setError(err.message || 'Credenciales inválidas. Acceso denegado.');
@@ -29,7 +30,6 @@ const Login = () => {
 
     return (
         <div className="login-page-wrapper">
-            {/* Background Layer */}
             <div className="login-bg-overlay"></div>
             
             <main className="login-container animate-fade-in">
@@ -100,7 +100,7 @@ const Login = () => {
 
                     <footer className="login-footer-minimal">
                         <div className="footer-line"></div>
-                        <p className="v-tag">VERSION PROTOCOL 1.0.8</p>
+                        <p className="v-tag">VERSION PROTOCOL 1.1.2</p>
                         <p className="copy-tag">© REP CALISTHENICS ACADEMY</p>
                     </footer>
                 </div>

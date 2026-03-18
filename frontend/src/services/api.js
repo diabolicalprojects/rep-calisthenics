@@ -175,6 +175,13 @@ export const api = {
     body: JSON.stringify(data)
   }).then(handleResponse),
 
+  // RETENTION CONTACTS
+  recordRetentionContact: (data) => fetch(`${API_URL}/retention/contacts`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
   // EXPENSE CATEGORIES
   getExpenseCategories: () => fetch(`${API_URL}/expenses/categories`, { headers: getAuthHeaders() }).then(handleResponse),
   createExpenseCategory: (name) => fetch(`${API_URL}/expenses/categories`, {
@@ -192,4 +199,17 @@ export const api = {
 
   // PUBLIC BOOKING
   getPublicAvailability: (date) => fetch(`${API_URL}/public/appointments?date=${date}`).then(handleResponse),
+
+  // CASH REGISTER (Shifts)
+  getActiveCashRegister: () => fetch(`${API_URL}/cash-register/active`, { headers: getAuthHeaders() }).then(handleResponse),
+  openCashRegister: (data) => fetch(`${API_URL}/cash-register/open`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  closeCashRegister: (data) => fetch(`${API_URL}/cash-register/close`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
 };

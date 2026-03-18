@@ -358,25 +358,6 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
 
             <style>{`
                 .sigCanvas { cursor: crosshair; }
-                .form-input { 
-                    background: var(--color-glass); 
-                    border: 1px solid var(--color-glass-border);
-                    color: var(--color-text-main);
-                    border-radius: 8px;
-                    padding: 8px 12px;
-                    width: 100%;
-                    font-size: 14px;
-                }
-                .form-group label {
-                    display: block;
-                    font-size: 12px;
-                    color: var(--color-text-muted);
-                    margin-bottom: 6px;
-                }
-                @keyframes modal-appear {
-                    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-                    to { opacity: 1; transform: scale(1) translateY(0); }
-                }
             `}</style>
         </div>
     );

@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Plus, AlertCircle, Check, X } from 'lucide-react';
+import { Plus, Check, AlertCircle, RefreshCw, Filter, Receipt } from 'lucide-react';
 import { api } from '../services/api';
+import BaseModal from '../components/BaseModal';
+import SearchInput from '../components/SearchInput';
+import HelpTooltip from '../components/HelpTooltip';
+import { fmtCurrency, fmtDate } from '../utils/formatters';
 
 const Payments = () => {
     const [payments, setPayments] = useState([]);
     const [metrics, setMetrics] = useState({ monthlyRevenue: 0, pendingDebts: 0, plansDistribution: {} });
     const [showModal, setShowModal] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState(null);
-    const [formData, setFormData] = useState({ memberName: '', concept: 'Mensualidad', amount: '', status: 'Pagado' });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+    
+    const [formData, setFormData] = useState({ 
+        memberName: '', concept: 'Mensualidad', amount: '', status: 'Pagado' 
+    });
 
-    const fetchPayments = async () => {
+    const fetchData = async () => {
+        setLoading(true);
         try {
-            const data = await api.getPayments();
+            const [data, members] = await Promise.all([
+                api.getPayments(),
+                api.getMembers()
+            ]);
+
             setPayments(data);
 
-            // Calculate payment metrics
             let revenue = 0;
             let debts = 0;
             data.forEach(p => {
@@ -23,8 +36,6 @@ const Payments = () => {
                 else if (p.status === 'Pendiente') debts += amount;
             });
 
-            // Calculate Plan Distribution
-            const members = await api.getMembers();
             const planCounts = {};
             members.forEach(m => {
                 if (m.plan) {
@@ -33,188 +44,203 @@ const Payments = () => {
             });
 
             setMetrics({ monthlyRevenue: revenue, pendingDebts: debts, plansDistribution: planCounts });
-        } catch (err) { console.error('Error fetching payments:', err); }
-    };
-
-    useEffect(() => {
-        fetchPayments();
-    }, []);
-
-    const handleRowClick = (payment) => {
-        if (window.innerWidth <= 768) {
-            setSelectedPayment(payment);
+        } catch (err) { 
+            console.error('Error fetching payments:', err); 
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await api.addPayment({
-                ...formData
-            });
+            await api.addPayment(formData);
             setShowModal(false);
             setFormData({ memberName: '', concept: 'Mensualidad', amount: '', status: 'Pagado' });
-            fetchPayments();
-        } catch (err) { console.error('Error saving payment:', err); }
+            fetchData();
+        } catch (err) { 
+            alert('Error: ' + err.message);
+        }
     };
+
+    const filteredPayments = payments.filter(p => 
+        p.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.concept.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="animate-fade-in">
-            <header className="page-header" style={{ marginBottom: '24px' }}>
+            <header className="page-header stagger-1">
                 <div>
-                    <h1 className="page-title">Pagos y Deudas</h1>
-                    <p className="page-subtitle text-muted">Contabilidad conectada con Cloud Firestore</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <h1 className="page-title">Finanzas</h1>
+                        <HelpTooltip title="Contabilidad" content="Módulo de ingresos y cuentas por cobrar. Todos los pagos realizados en el POS se reflejan aquí automáticamente." />
+                    </div>
+                    <p className="page-subtitle text-muted">Gestión de flujo de caja y deudas</p>
                 </div>
-                <div>
+                <div className="flex-responsive" style={{ gap: 12 }}>
+                    <button className="btn-ghost" onClick={fetchData} disabled={loading}>
+                        <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    </button>
                     <button className="btn-primary" onClick={() => setShowModal(true)}>
-                        <Plus size={18} /> Registrar Pago
+                        <Plus size={18} /> Nuevo Registro
                     </button>
                 </div>
             </header>
 
-            {/* Modal Agregar Pago */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="glass-panel modal-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '20px' }}>Registrar Pago / Deuda</h2>
-                            <button onClick={() => setShowModal(false)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div className="form-group">
-                                <label>Atleta</label>
-                                <input required type="text" placeholder="Nombre del atleta" className="form-input" value={formData.memberName} onChange={e => setFormData({ ...formData, memberName: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Concepto</label>
-                                <input required type="text" placeholder="Ej. Mes de Mayo" className="form-input" value={formData.concept} onChange={e => setFormData({ ...formData, concept: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label>Monto ($)</label>
-                                <input required type="number" placeholder="00.00" className="form-input" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Estado del pago</label>
-                                <select className="form-input" value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })}>
-                                    <option value="Pagado">Pagado Exitosamente</option>
-                                    <option value="Pendiente">Deuda Pendiente</option>
-                                </select>
-                            </div>
-
-                            <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>Guardar Transacción</button>
-                        </form>
+            <section className="metrics-grid responsive-grid" style={{ marginTop: 32 }}>
+                <div className="glass-panel pulse-hover stagger-2">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Ingresos Pagados</span>
+                        <div className="icon-wrapper green" style={{ width: 32, height: 32 }}><Check size={16} /></div>
                     </div>
-                </div>
-            )}
-
-            {/* Modal Detalle Pago (Móvil) */}
-            {selectedPayment && (
-                <div className="modal-overlay">
-                    <div className="glass-panel modal-content">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '20px' }}>Detalles del Pago</h2>
-                            <button onClick={() => setSelectedPayment(null)} className="btn-ghost" style={{ padding: '5px' }}><X size={20} /></button>
-                        </div>
-
-                        <div className="detail-card">
-                            <div className="detail-item">
-                                <span className="detail-label">Atleta</span>
-                                <span className="detail-value">{selectedPayment.memberName}</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-label">Concepto</span>
-                                <span className="detail-value">{selectedPayment.concept}</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-label">Monto Transacción</span>
-                                <span className="detail-value" style={{ fontSize: '24px', fontWeight: 'bold' }}>${selectedPayment.amount}</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-label">Fecha del registro</span>
-                                <span className="detail-value">{new Date(selectedPayment.date).toLocaleDateString()}</span>
-                            </div>
-                            <div className="detail-item">
-                                <span className="detail-label">Estado</span>
-                                <span className={`status-badge ${selectedPayment.status === 'Pagado' ? 'success' : 'danger'}`} style={{ width: 'fit-content', padding: '6px 16px' }}>
-                                    {selectedPayment.status}
-                                </span>
-                            </div>
-                        </div>
-
-                        <button className="btn-primary" style={{ width: '100%', marginTop: '32px' }} onClick={() => setSelectedPayment(null)}>
-                            Regresar
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <section className="metrics-grid" style={{ marginBottom: '32px' }}>
-                <div className="glass-panel metric-card pulse-hover stagger-2">
-                    <div className="metric-header">
-                        <h3>Ingresos Mensuales</h3>
-                        <div className="icon-wrapper green"><Check size={20} /></div>
-                    </div>
-                    <div className="metric-value">${metrics.monthlyRevenue}</div>
-                    <p className="text-muted" style={{ fontSize: '12px', marginTop: '10px' }}>Total recaudado este mes</p>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-success)' }}>{fmtCurrency(metrics.monthlyRevenue)}</div>
+                    <p className="text-muted" style={{ fontSize: 11, marginTop: 8 }}>Recaudación histórica acumulada</p>
                 </div>
 
-                <div className="glass-panel metric-card pulse-hover stagger-3">
-                    <div className="metric-header">
-                        <h3>Deudas Pendientes</h3>
-                        <div className="icon-wrapper red"><AlertCircle size={20} /></div>
+                <div className="glass-panel pulse-hover stagger-3">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Deuda en Riesgo</span>
+                        <div className="icon-wrapper red" style={{ width: 32, height: 32 }}><AlertCircle size={16} /></div>
                     </div>
-                    <div className="metric-value text-danger">${metrics.pendingDebts}</div>
-                    <p className="text-muted" style={{ fontSize: '12px', marginTop: '10px' }}>Por cobrar a miembros</p>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--color-danger)' }}>{fmtCurrency(metrics.pendingDebts)}</div>
+                    <p className="text-muted" style={{ fontSize: 11, marginTop: 8 }}>Monto total por cobrar</p>
                 </div>
 
-                <div className="glass-panel metric-card pulse-hover stagger-4" style={{ gridColumn: 'span 1' }}>
-                    <div className="metric-header">
-                        <h3>Distribución de Planes</h3>
-                        <div className="icon-wrapper blue"><Download size={20} /></div>
+                <div className="glass-panel pulse-hover stagger-4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Atletas por Plan</span>
+                        <div className="icon-wrapper blue" style={{ width: 32, height: 32 }}><Filter size={16} /></div>
                     </div>
-                    <div style={{ marginTop: '15px' }}>
-                        {Object.keys(metrics.plansDistribution).length === 0 ? (
-                            <p className="text-muted" style={{ fontSize: '13px' }}>No hay datos de planes</p>
-                        ) : Object.entries(metrics.plansDistribution).map(([plan, count]) => (
-                            <div key={plan} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-                                <span className="text-muted">{plan}</span>
-                                <span style={{ color: 'var(--color-accent-orange)', fontWeight: 'bold' }}>{count} miembros</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {Object.entries(metrics.plansDistribution).map(([plan, count]) => (
+                            <div key={plan} style={{ fontSize: 12, padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 6 }}>
+                                <span className="text-orange" style={{ fontWeight: 700 }}>{count}</span> {plan}
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            <div className="glass-panel mobile-full" style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ padding: '24px', borderBottom: '1px solid var(--color-glass-border)' }}>
-                    <h2 style={{ fontSize: '18px' }}>Transacciones Recientes</h2>
+            <div className="glass-panel mobile-full stagger-5" style={{ padding: 0, marginTop: 24, overflow: 'hidden' }}>
+                <div className="flex-responsive" style={{ padding: 20, justifyContent: 'space-between', alignItems: 'center', gap: 16, borderBottom: '1px solid var(--color-glass-border)' }}>
+                    <h2 style={{ fontSize: 18, fontWeight: 700 }}>Libro de Transacciones</h2>
+                    <div style={{ flex: 1, minWidth: 'min(300px, 100%)', maxWidth: 400 }}>
+                        <SearchInput value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Filtrar por nombre o concepto..." />
+                    </div>
                 </div>
+
                 <div className="table-container">
-                    <table className="modern-table clickable-rows" style={{ width: '100%' }}>
+                    <table className="modern-table">
                         <thead>
                             <tr>
+                                <th>Fecha</th>
                                 <th>Atleta</th>
                                 <th>Concepto</th>
                                 <th>Monto</th>
                                 <th>Estado</th>
+                                <th style={{ textAlign: 'center' }}>Detalle</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {payments.length === 0 ? (
-                                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>No hay transacciones aún</td></tr>
-                            ) : payments.map(p => (
-                                <tr key={p.id} onClick={() => handleRowClick(p)}>
-                                    <td><span style={{ fontWeight: '500' }}>{p.memberName}</span></td>
-                                    <td style={{ color: 'var(--color-text-muted)' }}>{p.concept}</td>
-                                    <td><strong style={{ color: 'var(--color-text-main)' }}>${p.amount}</strong></td>
-                                    <td><span className={`status-badge ${p.status === 'Pagado' ? 'success' : 'danger'}`}>{p.status}</span></td>
+                            {loading ? (
+                                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40 }}>Cargando datos...</td></tr>
+                            ) : filteredPayments.length === 0 ? (
+                                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-muted)' }}>No se encontraron registros financieros.</td></tr>
+                            ) : filteredPayments.map(p => (
+                                <tr key={p.id}>
+                                    <td data-label="Fecha" style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{fmtDate(p.date)}</td>
+                                    <td data-label="Atleta"><span style={{ fontWeight: 600 }}>{p.memberName}</span></td>
+                                    <td data-label="Concepto" style={{ fontSize: 13 }}>{p.concept}</td>
+                                    <td data-label="Monto"><strong style={{ fontSize: 16 }}>{fmtCurrency(p.amount)}</strong></td>
+                                    <td data-label="Estado">
+                                        <span className={`status-badge ${p.status === 'Pagado' ? 'success' : 'danger'}`}>
+                                            {p.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td data-label="Detalle" style={{ textAlign: 'center' }}>
+                                        <button className="btn-ghost" style={{ padding: 8 }} onClick={() => setSelectedPayment(p)}>
+                                            <Receipt size={16} />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {/* MODAL REGISTRO */}
+            <BaseModal isOpen={showModal} onClose={() => setShowModal(false)} title="Registrar Transacción">
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                    <div className="form-group">
+                        <label>Atleta / Miembro</label>
+                        <input required className="form-input" placeholder="Nombre completo" value={formData.memberName} onChange={e => setFormData({...formData, memberName: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                        <label>Concepto</label>
+                        <input required className="form-input" placeholder="Ej. Inscripción o Mes Mayo" value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                        <label>Monto</label>
+                        <div style={{ position: 'relative' }}>
+                            <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-orange)', fontWeight: 700 }}>$</span>
+                            <input required type="number" className="form-input" style={{ paddingLeft: 32 }} placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Estado Inicial</label>
+                        <select className="form-input" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                            <option value="Pagado">PAGADO (Efectivo/Tarjeta)</option>
+                            <option value="Pendiente">PENDIENTE (Deuda)</option>
+                        </select>
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ marginTop: 10 }}>Confirmar Registro</button>
+                </form>
+            </BaseModal>
+
+            {/* MODAL DETALLE */}
+            <BaseModal isOpen={!!selectedPayment} onClose={() => setSelectedPayment(null)} title="Comprobante Digital">
+                {selectedPayment && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                        <div style={{ textAlign: 'center', padding: 20, background: 'rgba(0,0,0,0.2)', borderRadius: 16 }}>
+                            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Monto de la Operación</div>
+                            <div style={{ fontSize: 42, fontWeight: 900, color: selectedPayment.status === 'Pagado' ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                {fmtCurrency(selectedPayment.amount)}
+                            </div>
+                            <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>ID: {selectedPayment.id}</div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                            <div>
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Atleta</div>
+                                <div style={{ fontWeight: 700 }}>{selectedPayment.memberName}</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Fecha</div>
+                                <div>{fmtDate(selectedPayment.date)}</div>
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }}>
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Concepto</div>
+                                <div>{selectedPayment.concept}</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Estado</div>
+                                <span className={`status-badge ${selectedPayment.status === 'Pagado' ? 'success' : 'danger'}`}>
+                                    {selectedPayment.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: 20, display: 'flex', gap: 12 }}>
+                            <button className="btn-ghost" style={{ flex: 1 }}>Imprimir Ticket</button>
+                            <button className="btn-primary" style={{ flex: 1 }} onClick={() => setSelectedPayment(null)}>Entendido</button>
+                        </div>
+                    </div>
+                )}
+            </BaseModal>
         </div>
     );
 };
