@@ -30,7 +30,7 @@ const Migration = () => {
                         <Database size={40} />
                     </div>
 
-                    <h2 style={{ fontSize: '28px', color: 'white', marginBottom: '16px' }}>Función de Versión Completa</h2>
+                    <h2 style={{ fontSize: '28px', color: 'inherit', marginBottom: '16px' }}>Función de Versión Completa</h2>
                     <p style={{ fontSize: '18px', color: 'var(--color-text-muted)', marginBottom: '32px', lineHeight: '1.6' }}>
                         ¡Deja de capturar datos uno por uno! Con la función de migración podrás subir un archivo **Excel o CSV** y cargar cientos de miembros, inventario y registros en segundos.
                     </p>
@@ -57,7 +57,7 @@ const Migration = () => {
                     </button>
 
                     <p style={{ marginTop: '20px', color: 'var(--color-text-muted)', fontSize: '14px' }}>
-                        O llama al <strong style={{ color: 'white' }}>+52 449 124 5952</strong>
+                        O llama al <strong style={{ color: 'inherit' }}>+52 449 124 5952</strong>
                     </p>
                 </div>
             </div>

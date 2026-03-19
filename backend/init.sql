@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS members (
     email TEXT,
     phone TEXT,
     plan TEXT,
-    status TEXT DEFAULT 'active',
+    status TEXT DEFAULT 'Activo',
     join_date DATE DEFAULT CURRENT_DATE,
     expiration_date DATE,
     photo_url TEXT,
@@ -51,6 +51,19 @@ CREATE TABLE IF NOT EXISTS inventory (
     last_update TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Cash Registers (Shifts)
+CREATE TABLE IF NOT EXISTS cash_registers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    status TEXT DEFAULT 'open', -- 'open', 'closed'
+    opening_balance DECIMAL(10,2) NOT NULL,
+    closing_balance DECIMAL(10,2),
+    opening_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    closing_time TIMESTAMP WITH TIME ZONE,
+    cashier_id UUID REFERENCES users(id),
+    cashier_name TEXT,
+    notes TEXT
+);
+
 -- Transactions (POS)
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,6 +71,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment_method TEXT,
     cashier_id UUID REFERENCES users(id),
     cashier_name TEXT,
+    register_id UUID REFERENCES cash_registers(id),
     items JSONB, -- Array of items sold
     type TEXT DEFAULT 'retail', -- 'retail', 'subscription', 'visit'
     status TEXT DEFAULT 'Pagado',
@@ -107,6 +121,17 @@ CREATE TABLE IF NOT EXISTS appointments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Retention/Contact Log
+CREATE TABLE IF NOT EXISTS retention_contacts_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id UUID REFERENCES members(id),
+    type TEXT, -- 'whatsapp', 'email', 'call'
+    status TEXT DEFAULT 'sent',
+    message TEXT,
+    recorded_by UUID REFERENCES users(id),
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Routines
 CREATE TABLE IF NOT EXISTS routines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -122,15 +147,9 @@ CREATE TABLE IF NOT EXISTS routines (
 );
 
 -- Initial Data
--- Admin Default (password will be hashed by initDB if plain text)
-INSERT INTO users (name, email, username, password, role) 
-VALUES ('Administrador', 'admin@gym.com', 'admin', 'Diabolical1502', 'admin')
-ON CONFLICT (username) DO NOTHING;
-
--- Developer (Superadmin, password will be hashed by initDB if plain text)
-INSERT INTO users (name, username, email, password, role) 
-VALUES ('Developer', 'DiabolicalDev', 'dev@diabolical.com', 'Diabolical1502', 'developer')
-ON CONFLICT (username) DO NOTHING;
+-- NOTA: Los usuarios Admin y Developer son creados por initDB en index.js
+-- usando las variables de entorno INITIAL_ADMIN_PASSWORD e INITIAL_DEV_PASSWORD.
+-- No almacenar contraseñas en texto plano en este archivo.
 
 INSERT INTO memberships (name, price, duration_days) VALUES 
 ('Básico', 350.00, 30),

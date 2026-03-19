@@ -1,59 +1,50 @@
 import express from 'express';
-import Payment from '../models/Payment.js';
+import { query } from '../config/db.js';
+import { authenticateToken, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET all payments
+router.use(authenticateToken);
+router.use(authorize(['admin', 'developer']));
+
+/**
+ * GET /api/payments
+ * Lista pagos, opcionalmente filtrados por rango de fechas.
+ */
 router.get('/', async (req, res) => {
-    try {
-        const payments = await Payment.find().sort({ date: -1 });
-        res.json(payments);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  const { startDate, endDate } = req.query;
+  try {
+    let queryText = 'SELECT id, member_name as "memberName", member_id as "memberId", concept, amount, status, date FROM payments';
+    let params = [];
+    if (startDate && endDate) {
+      queryText += ' WHERE date BETWEEN $1 AND $2';
+      params = [startDate, endDate];
     }
+    queryText += ' ORDER BY date DESC';
+    const result = await query(queryText, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching payments:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
-// POST a new payment
+/**
+ * POST /api/payments
+ * Registra un pago manual (contabilidad).
+ */
 router.post('/', async (req, res) => {
-    const payment = new Payment({
-        memberName: req.body.memberName,
-        concept: req.body.concept,
-        amount: req.body.amount,
-        status: req.body.status
-    });
-
-    try {
-        const newPayment = await payment.save();
-        res.status(201).json(newPayment);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
-
-// GET some basic metrics for dashboard
-router.get('/metrics', async (req, res) => {
-    try {
-        const payments = await Payment.find();
-
-        let monthlyRevenue = 0;
-        let pendingDebts = 0;
-
-        payments.forEach(p => {
-            if (p.status === 'Pagado') {
-                monthlyRevenue += p.amount;
-            } else {
-                pendingDebts += p.amount;
-            }
-        });
-
-        res.json({
-            monthlyRevenue,
-            pendingDebts
-        });
-
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
+  const { memberName, memberId, concept, amount, status } = req.body;
+  try {
+    const result = await query(
+      'INSERT INTO payments (member_name, member_id, concept, amount, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [memberName, memberId, concept, amount, status]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating payment:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 export default router;

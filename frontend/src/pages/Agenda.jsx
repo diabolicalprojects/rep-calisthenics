@@ -114,7 +114,7 @@ const Agenda = () => {
             <div className="dashboard-grid-main" style={{ alignItems: 'start' }}>
                 {/* DAILY VIEW */}
                 <div className="glass-panel" style={{ minHeight: 500 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>
                         <h2 style={{ fontSize: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
                             <CalendarDays size={20} className="text-success" /> Confirmadas: {fmtDate(selectedDate)}
                         </h2>
@@ -183,7 +183,7 @@ const Agenda = () => {
                                     <button className="btn-primary" style={{ flex: 1, fontSize: 11, padding: '6px' }} onClick={() => updateStatus(apt.id, 'Confirmada')}>
                                         Confirmar
                                     </button>
-                                    <button className="btn-ghost" style={{ flex: 1, fontSize: 11, padding: '6px', color: 'var(--color-danger)' }} onClick={() => updateStatus(apt.id, 'Cancelada', apt)}>
+                                    <button className="btn-ghost" style={{ flex: 1, fontSize: 11, padding: '6px', color: 'var(--color-text-muted)' }} onClick={() => updateStatus(apt.id, 'Cancelada', apt)}>
                                         X
                                     </button>
                                 </div>

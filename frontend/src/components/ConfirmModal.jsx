@@ -52,15 +52,11 @@ const ConfirmModal = ({
                         >
                             {cancelText}
                         </button>
-                        <button 
-                            className="btn-primary" 
-                            style={{ 
-                                flex: 1, 
-                                background: type === 'danger' ? 'var(--color-danger)' : undefined,
-                                color: type === 'danger' ? 'white' : undefined
-                            }} 
-                            onClick={onConfirm}
-                        >
+                            <button 
+                                className="btn-primary" 
+                                style={{ flex: 1 }} 
+                                onClick={onConfirm}
+                            >
                             {confirmText}
                         </button>
                     </div>

@@ -207,7 +207,7 @@ const POS = () => {
                     <button className="btn-ghost" onClick={() => { fetchInventory(); fetchMembers(); }} title="Sincronizar Datos">
                         <RefreshCw size={18} />
                     </button>
-                    <button className="btn-ghost" onClick={handleCloseRegister} style={{ color: 'var(--color-danger)', border: '1px solid var(--color-danger)33' }}>
+                    <button className="btn-ghost" onClick={handleCloseRegister} style={{ color: 'var(--color-accent-orange)', border: '1px solid var(--color-accent-orange)33' }}>
                         <Lock size={18} /> CERRAR TURNO
                     </button>
                 </div>
@@ -222,7 +222,7 @@ const POS = () => {
 
             <div className="pos-layout-grid responsive-grid" style={{ gap: '24px', alignItems: 'start', marginTop: 8 }}>
                 {/* Product/Service Selection */}
-                <div className="glass-panel stagger-2" style={{ minHeight: '700px', display: 'flex', flexDirection: 'column' }}>
+                <div className="glass-panel stagger-2" style={{ height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'rgba(0,0,0,0.2)', padding: 6, borderRadius: 14 }}>
                         {[
                             { id: 'retail', label: 'PRODUCTOS', icon: <Tag size={16}/> },
@@ -264,7 +264,9 @@ const POS = () => {
                         display: 'grid', 
                         gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(140px, 45%, 200px), 1fr))', 
                         gap: '12px', 
-                        flex: 1 
+                        flex: 1,
+                        overflowY: 'auto',
+                        paddingRight: '8px'
                     }}>
                         {activeTab === 'retail' && inventory
                             .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -347,13 +349,13 @@ const POS = () => {
                 </div>
 
                 {/* Checkout Column */}
-                <div className="glass-panel stagger-3" style={{ padding: 0, position: 'sticky', top: 20, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent-orange)33' }}>
+                <div className="glass-panel stagger-3" style={{ padding: 0, position: 'sticky', top: 20, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent-orange)33', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
                     <div style={{ padding: 24, borderBottom: '1px solid var(--color-glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 800 }}><ShoppingCart size={22} className="text-orange" /> Ticket Actual</h3>
                         <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 4 }}>{cart.length} ITEMS</span>
                     </div>
 
-                    <div style={{ padding: 20, minHeight: 380, maxHeight: 450, overflowY: 'auto' }}>
+                    <div style={{ padding: 20, flex: 1, overflowY: 'auto' }}>
                         {cart.length === 0 ? (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 340, opacity: 0.3 }}>
                                 <ShoppingCart size={48} style={{ marginBottom: 16 }} />

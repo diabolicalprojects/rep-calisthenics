@@ -1,74 +1,80 @@
 import express from 'express';
-import Inventory from '../models/Inventory.js';
+import { query } from '../config/db.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { InventorySchema } from '../validators/schemas.js';
+import { z } from 'zod';
 
 const router = express.Router();
 
-// Obtener todo el inventario
+router.use(authenticateToken);
+
+/**
+ * GET /api/inventory
+ * Lista todos los artículos del inventario ordenados por nombre.
+ */
 router.get('/', async (req, res) => {
-    try {
-        const items = await Inventory.find().sort({ createdAt: -1 });
-        // Actualizar el estado si se cambia la cantidad manualmente (ej: por debajo de 5)
-        const updatedItems = items.map(item => {
-            if (item.quantity <= 0) item.status = 'Agotado';
-            else if (item.quantity <= 5) item.status = 'Poco Stock';
-            else item.status = 'Disponible';
-            return item;
-        });
-        res.json(updatedItems);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const result = await query('SELECT * FROM inventory ORDER BY name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching inventory:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
-// Agregar nuevo insumo
+/**
+ * POST /api/inventory
+ * Agrega un nuevo artículo al inventario con validación Zod.
+ */
 router.post('/', async (req, res) => {
-    const item = new Inventory({
-        name: req.body.name,
-        category: req.body.category,
-        quantity: req.body.quantity,
-        price: req.body.price,
-    });
-
-    if (item.quantity <= 0) item.status = 'Agotado';
-    else if (item.quantity <= 5) item.status = 'Poco Stock';
-    else item.status = 'Disponible';
-
-    try {
-        const newItem = await item.save();
-        res.status(201).json(newItem);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+  try {
+    const validated = InventorySchema.parse(req.body);
+    const result = await query(
+      'INSERT INTO inventory (name, price, quantity, category) VALUES ($1, $2, $3, $4) RETURNING *',
+      [validated.name, validated.price, validated.quantity, validated.category]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    console.error('Error creating inventory item:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
-// Aumentar o disminuir stock
-router.put('/:id/stock', async (req, res) => {
-    try {
-        const item = await Inventory.findById(req.params.id);
-        if (!item) return res.status(404).json({ message: 'Item no encontrado' });
-
-        item.quantity = req.body.quantity !== undefined ? req.body.quantity : item.quantity;
-
-        if (item.quantity <= 0) item.status = 'Agotado';
-        else if (item.quantity <= 5) item.status = 'Poco Stock';
-        else item.status = 'Disponible';
-
-        const updatedItem = await item.save();
-        res.json(updatedItem);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
+/**
+ * PUT /api/inventory/:id
+ * Actualiza la cantidad de un artículo del inventario.
+ */
+router.put('/:id', async (req, res) => {
+  const { quantity } = req.body;
+  if (quantity === undefined || isNaN(Number(quantity))) {
+    return res.status(400).json({ error: 'La cantidad es requerida y debe ser un número' });
+  }
+  try {
+    const result = await query(
+      'UPDATE inventory SET quantity=$1, last_update=NOW() WHERE id=$2 RETURNING *',
+      [quantity, req.params.id]
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: 'Artículo no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error updating inventory:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
-// Eliminar producto
+/**
+ * DELETE /api/inventory/:id
+ * Elimina un artículo del inventario.
+ */
 router.delete('/:id', async (req, res) => {
-    try {
-        const item = await Inventory.findByIdAndDelete(req.params.id);
-        if (!item) return res.status(404).json({ message: 'Item no encontrado' });
-        res.json({ message: 'Item eliminado' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    await query('DELETE FROM inventory WHERE id = $1', [req.params.id]);
+    res.sendStatus(204);
+  } catch (err) {
+    console.error('Error deleting inventory item:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 export default router;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Info, CreditCard, Clock, AlignmentLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, Info, Clock } from 'lucide-react';
 import { api } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import BaseModal from '../components/BaseModal';
@@ -120,7 +120,7 @@ const Memberships = () => {
                                 <button className="btn-ghost" style={{ flex: 1 }} onClick={() => handleEdit(plan)}>
                                     <Edit2 size={16} /> Editar
                                 </button>
-                                <button className="btn-ghost" style={{ flex: 1, color: 'var(--color-danger)' }} onClick={() => setConfirmDeleteId(plan.id)}>
+                                <button className="btn-ghost" style={{ flex: 1, color: 'var(--color-text-muted)' }} onClick={() => setConfirmDeleteId(plan.id)}>
                                     <Trash2 size={16} /> Borrar
                                 </button>
                             </div>
