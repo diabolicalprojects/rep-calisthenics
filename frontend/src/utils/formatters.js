@@ -14,6 +14,20 @@ export const fmtDate = (date, locale = 'es-MX') => {
 };
 
 /**
+ * Formatea una fecha a una hora legible (ej., 14:30).
+ * @param {string|Date} date - Fecha a formatear.
+ * @param {string} locale - Localización (defecto es-MX).
+ * @returns {string} - Hora formateada.
+ */
+export const fmtTime = (date, locale = 'es-MX') => {
+    if (!date) return '—';
+    return new Date(date).toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
+/**
  * Formatea un número como moneda.
  * @param {number} amount - Cantidad a formatear.
  * @param {string} currency - Moneda (defecto MXN).
