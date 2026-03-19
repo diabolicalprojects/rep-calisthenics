@@ -136,7 +136,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                 <h3 style={{ fontSize: '16px', margin: 0 }}>Identidad y Contacto</h3>
                             </div>
                             
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                 <div className="form-group" style={{ gridColumn: 'span 2' }}>
                                     <label>Nombre Completo *</label>
                                     <input required type="text" placeholder="Ej. Juan Pérez" className="form-input"
@@ -164,7 +164,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                 <h3 style={{ fontSize: '16px', margin: 0 }}>Membresía y Pago</h3>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {plans.map(p => (
                                     <div key={p.id}
                                         onClick={() => setFormData({ ...formData, plan: p.name, isCustomPlan: false })}
@@ -319,7 +319,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                             padding: '20px', 
                             borderRadius: '16px', 
                             border: '1px solid var(--color-accent-orange)',
-                            marginTop: '20px'
+                            marginTop: '32px'
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                 <span style={{ fontSize: '13px', opacity: 0.8 }}>Total a Cobrar:</span>

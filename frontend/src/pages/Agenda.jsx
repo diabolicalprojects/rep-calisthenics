@@ -111,7 +111,7 @@ const Agenda = () => {
                 </div>
             </header>
 
-            <div className="dashboard-grid-main" style={{ alignItems: 'start' }}>
+            <div className="dashboard-grid-main">
                 {/* DAILY VIEW */}
                 <div className="glass-panel" style={{ minHeight: 500 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>

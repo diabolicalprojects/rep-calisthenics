@@ -135,7 +135,7 @@ const Expenses = () => {
                     <button className="btn-ghost" onClick={() => setShowCatModal(true)}>
                         <Settings size={18} /> CONFIGURAR
                     </button>
-                    <button className="btn-primary" style={{ background: 'var(--color-danger)', boxShadow: '0 4px 15px rgba(255,77,77,0.2)' }} onClick={() => setShowModal(true)}>
+                    <button className="btn-primary" onClick={() => setShowModal(true)}>
                         <Plus size={18} /> REGISTRAR GASTO
                     </button>
                 </div>
@@ -148,7 +148,7 @@ const Expenses = () => {
                 { label: 'Impacto MRR', value: `${Math.round((stats.totalMonthly / 50000) * 100)}%`, color: 'var(--color-text-muted)' },
             ]} />
 
-            <div className="dashboard-grid-main" style={{ marginBottom: 32, marginTop: 8 }}>
+            <div className="dashboard-grid-main" style={{ marginBottom: 32 }}>
                 {/* LISTING */}
                 <div className="glass-panel stagger-2 mobile-full" style={{ padding: 0, overflow: 'hidden' }}>
                     <div className="flex-responsive" style={{ padding: 24, borderBottom: '1px solid var(--color-glass-border)', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -312,7 +312,7 @@ const Expenses = () => {
                         </div>
                         <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                             <button type="button" className="btn-ghost" style={{ flex: 1 }} onClick={() => setShowModal(false)}>CANCELAR</button>
-                            <button type="submit" className="btn-primary" style={{ flex: 2, background: 'var(--color-danger)', gap: 8 }}>
+                            <button type="submit" className="btn-primary" style={{ flex: 2, gap: 8 }}>
                                 <Save size={18}/> GUARDAR MOVIMIENTO
                             </button>
                         </div>

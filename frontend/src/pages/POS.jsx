@@ -220,9 +220,9 @@ const POS = () => {
                 { label: 'Efectivo en Caja', value: fmtCurrency(cashRegister.initialAmount + (cashRegister.totalSales || 0)), color: 'var(--color-text-muted)' },
             ]} />
 
-            <div className="pos-layout-grid responsive-grid" style={{ gap: '24px', alignItems: 'start', marginTop: 8 }}>
+            <div className="pos-layout-grid" style={{ gap: '24px', alignItems: 'start', marginTop: 8, height: 'calc(100vh - 220px)' }}>
                 {/* Product/Service Selection */}
-                <div className="glass-panel stagger-2" style={{ height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div className="glass-panel stagger-2" style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'rgba(0,0,0,0.2)', padding: 6, borderRadius: 14 }}>
                         {[
                             { id: 'retail', label: 'PRODUCTOS', icon: <Tag size={16}/> },
@@ -349,7 +349,7 @@ const POS = () => {
                 </div>
 
                 {/* Checkout Column */}
-                <div className="glass-panel stagger-3" style={{ padding: 0, position: 'sticky', top: 20, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent-orange)33', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+                <div className="glass-panel stagger-3" style={{ padding: 0, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent-orange)33', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                     <div style={{ padding: 24, borderBottom: '1px solid var(--color-glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 800 }}><ShoppingCart size={22} className="text-orange" /> Ticket Actual</h3>
                         <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 4 }}>{cart.length} ITEMS</span>
@@ -362,9 +362,9 @@ const POS = () => {
                                 <p style={{ fontSize: 14 }}>Selecciona productos o servicios</p>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                {cart.map(item => (
-                                    <div key={item.cartId} className="glass-panel" style={{ padding: 12, background: 'rgba(255,255,255,0.01)', border: '1px solid var(--color-glass-border)' }}>
+                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                 {cart.map(item => (
+                                     <div key={item.cartId} className="glass-panel" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--color-glass-border)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                                             <div style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</div>
                                             <button onClick={() => removeFromCart(item.cartId)} style={{ color: 'var(--color-danger)', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6 }}><X size={14}/></button>

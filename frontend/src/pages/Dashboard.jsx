@@ -202,7 +202,7 @@ const Dashboard = () => {
                 )}
             </section>
 
-            <div className="dashboard-grid-main" style={{ marginTop: '32px' }}>
+            <div className="dashboard-grid-main">
                 <div className="glass-panel stagger-6" style={{ padding: 0, overflow: 'hidden' }}>
                     <div className="flex-responsive" style={{ padding: 24, borderBottom: '1px solid var(--color-glass-border)', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h2 style={{ fontSize: 18, fontWeight: 800 }}>Ventas en Tiempo Real</h2>

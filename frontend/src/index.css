@@ -161,6 +161,7 @@ p, span { overflow-wrap: break-word; }
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 24px;
+  margin-top: 32px;
 }
 
 @media (max-width: 1100px) {
@@ -263,8 +264,11 @@ p, span { overflow-wrap: break-word; }
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.form-group:last-child {
+  margin-bottom: 0;
 }
 .form-group label {
   font-size: 11px;

@@ -114,7 +114,7 @@ const MemberDetailModal = ({ member, isOpen, onClose, onUpdate, onDelete }) => {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '32px', borderTop: '1px solid var(--color-glass-border)', paddingTop: '24px' }}>
                     {isEditing ? (
                         <>
                             <button className="btn-ghost" style={{ flex: 1 }} onClick={() => setIsEditing(false)}>Cancelar</button>
