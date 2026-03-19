@@ -55,8 +55,8 @@ const Memberships = () => {
         setEditingPlan(plan);
         setFormData({
             name: plan.name,
-            price: plan.price.toString(),
-            duration: plan.duration.toString(),
+            price: (plan.price || 0).toString(),
+            duration: (plan.duration || 30).toString(),
             description: plan.description || ''
         });
         setShowModal(true);
@@ -92,12 +92,12 @@ const Memberships = () => {
             <div className="responsive-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(280px, 45%, 400px), 1fr))', gap: '24px', marginTop: '32px' }}>
                 {loading ? (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '100px' }}>Cargando planes...</div>
-                ) : plans.length === 0 ? (
+                ) : (plans || []).length === 0 ? (
                     <div className="glass-panel" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px' }}>
                         <Info size={40} style={{ opacity: 0.2, marginBottom: '16px', margin: '0 auto' }} />
                         <p className="text-muted">No has creado planes de membresía aún.</p>
                     </div>
-                ) : plans.map(plan => (
+                ) : (plans || []).map(plan => (
                     <div key={plan.id} className="glass-panel pulse-hover" style={{ padding: 0, overflow: 'hidden', borderTop: '4px solid var(--color-accent-orange)' }}>
                         <div style={{ padding: '24px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>

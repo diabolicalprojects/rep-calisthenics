@@ -76,7 +76,7 @@ const Members = () => {
                         />
                     </div>
                     <p className="page-subtitle text-muted">
-                        Hay <span className="text-success" style={{ fontWeight: 700 }}>{members.filter(m => m.status === 'Activo').length}</span> atletas entrenando hoy
+                        Hay <span className="text-success" style={{ fontWeight: 700 }}>{(members || []).filter(m => (m.status || '').toLowerCase() === 'activo').length}</span> atletas entrenando hoy
                     </p>
                 </div>
                 <button className="btn-primary" onClick={() => setShowOnboarding(true)}>
@@ -85,10 +85,10 @@ const Members = () => {
             </header>
 
             <ModuleMetricBar stats={[
-                { label: 'Suscritos', value: members.filter(m => m.status === 'Activo').length, color: 'var(--color-success)' },
-                { label: 'Ex-Atletas', value: members.filter(m => m.status === 'Inactivo').length, color: 'var(--color-danger)' },
-                { label: 'Ecosistema', value: members.length, color: 'var(--color-accent-orange)' },
-                { label: 'Segmentados', value: filtered.length, color: '#4da6ff' },
+                { label: 'Suscritos', value: (members || []).filter(m => (m.status || '').toLowerCase() === 'activo').length, color: 'var(--color-success)' },
+                { label: 'Ex-Atletas', value: (members || []).filter(m => (m.status || '').toLowerCase() === 'inactivo').length, color: 'var(--color-danger)' },
+                { label: 'Ecosistema', value: (members || []).length, color: 'var(--color-accent-orange)' },
+                { label: 'Segmentados', value: (filtered || []).length, color: '#4da6ff' },
             ]} />
 
             <div className="flex-responsive" style={{ marginBottom: 32, alignItems: 'center', justifyContent: 'space-between' }}>
