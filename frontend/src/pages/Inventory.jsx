@@ -31,7 +31,11 @@ const Inventory = () => {
         setLoading(true);
         try {
             const data = await api.getInventory();
-            setItems(data);
+            const enhancedData = data.map(item => ({
+                ...item,
+                status: item.quantity <= 0 ? 'Agotado' : item.quantity <= 5 ? 'Poco Stock' : 'Disponible'
+            }));
+            setItems(enhancedData);
         } catch (err) { 
             console.error('Error fetching inventory:', err); 
         } finally {
