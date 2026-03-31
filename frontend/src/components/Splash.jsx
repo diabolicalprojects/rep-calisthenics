@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import Logo from './Logo';
 import './Splash.css';
+import { useTheme } from '../context/ThemeContext';
 
 const Splash = ({ onComplete }) => {
     const [isVisible, setIsVisible] = useState(true);
     const [step, setStep] = useState(0);
     
+    const { settings } = useTheme();
     const messages = [
         "INITIALIZING CORE...",
         "AUTHENTICATING PROTOCOLS...",
         "LOADING DATABASE...",
-        "REP CONTROL SYSTEM ONLINE"
+        `${settings.brandName.toUpperCase()} ONLINE`
     ];
 
     useEffect(() => {

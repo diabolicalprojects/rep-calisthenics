@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { 
     Home, Users, Dumbbell, CreditCard, Calendar, Menu, X, 
     Package, LogOut, ShieldAlert, Database, Award, 
-    UserCheck, BarChart2, ArrowDownCircle, Info 
+    UserCheck, BarChart2, ArrowDownCircle, Info, Settings as SettingsIcon
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import Logo from './Logo';
@@ -28,6 +28,7 @@ const Sidebar = ({ onShowDemo }) => {
         { path: '/rutinas', name: 'Rutinas', icon: <Dumbbell size={20} /> },
         { path: '/inventario', name: 'Inventario', icon: <Package size={20} /> },
         { path: '/membresias', name: 'Membresías', icon: <Award size={20} /> },
+        { path: '/configuracion', name: 'Configuración', icon: <SettingsIcon size={20} />, adminOnly: true },
         { path: '/migracion', name: 'Migración', icon: <Database size={20} /> }
     ];
 

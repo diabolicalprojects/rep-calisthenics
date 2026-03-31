@@ -7,6 +7,7 @@ import BaseModal from '../../components/BaseModal';
 import { fmtDate, daysSince } from '../../utils/formatters';
 
 const MemberDetailModal = ({ member, isOpen, onClose, onUpdate, onDelete }) => {
+    const { settings } = useTheme();
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({ ...member });
 
@@ -19,7 +20,7 @@ const MemberDetailModal = ({ member, isOpen, onClose, onUpdate, onDelete }) => {
 
     const handleWhatsApp = () => {
         const cleanPhone = member.phone?.replace(/\D/g, '');
-        const msg = `Hola ${member.name}, te contactamos desde REP Calisthenics para...`;
+        const msg = `Hola ${member.name}, te contactamos desde ${settings.brandName} para...`;
         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 

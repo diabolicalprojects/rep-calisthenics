@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import HelpTooltip from '../components/HelpTooltip';
 import ModuleMetricBar from '../components/ModuleMetricBar';
 import SearchInput from '../components/SearchInput';
@@ -14,6 +15,7 @@ import { fmtCurrency, fmtDate, initials } from '../utils/formatters';
 
 const POS = () => {
     const { user } = useAuth();
+    const { settings } = useTheme();
     const [cashRegister, setCashRegister] = useState(null);
     const [loading, setLoading] = useState(true);
     const [openAmount, setOpenAmount] = useState('');
@@ -439,8 +441,8 @@ const POS = () => {
                                 {Array(20).fill(0).map((_, i) => <div key={i} style={{ width: 10, height: 10, background: 'var(--color-bg-primary)', borderRadius: '50%', marginTop: -5 }} />)}
                             </div>
 
-                            <div style={{ textAlign: 'center', fontWeight: '900', fontSize: 16, marginBottom: 8, letterSpacing: 2 }}>REP CALISTHENICS</div>
-                            <div style={{ textAlign: 'center', fontSize: 10, marginBottom: 20, color: '#666' }}>CENTRO DE ENTRENAMIENTO FUNCIONAL</div>
+                            <div style={{ textAlign: 'center', fontWeight: '900', fontSize: 16, marginBottom: 8, letterSpacing: 2 }}>{settings.brandName.toUpperCase()}</div>
+                            <div style={{ textAlign: 'center', fontSize: 10, marginBottom: 20, color: '#666' }}>SISTEMA DE GESTIÓN INTELIGENTE</div>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span>ORDEN:</span> <span>#{showReceipt.id?.toUpperCase()}</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span>FECHA:</span> <span>{fmtDate(showReceipt.timestamp)}</span></div>
@@ -467,7 +469,7 @@ const POS = () => {
 
                             <div style={{ textAlign: 'center', marginTop: 32, fontSize: 10, fontWeight: '700', color: '#888' }}>
                                 *** GRACIAS POR TU CONFIANZA ***<br/>
-                                #COMPUNIDAREP
+                                #{settings.brandName.toUpperCase().replace(/\s+/g, '')}
                             </div>
                         </div>
 

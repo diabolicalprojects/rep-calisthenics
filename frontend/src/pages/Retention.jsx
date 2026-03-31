@@ -6,8 +6,10 @@ import BaseModal from '../components/BaseModal';
 import ModuleMetricBar from '../components/ModuleMetricBar';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, Cell } from 'recharts';
 import { fmtCurrency, fmtDate } from '../utils/formatters';
+import { useTheme } from '../context/ThemeContext';
 
 const Retention = () => {
+    const { settings } = useTheme();
     const [atRiskMembers, setAtRiskMembers] = useState([]);
     const [selectedMember, setSelectedMember] = useState(null);
     const [notificationLogs, setNotificationLogs] = useState([]);
@@ -69,9 +71,9 @@ const Retention = () => {
         if (phone.length === 10) phone = '521' + phone;
 
         const msgs = {
-            Reactivación: `¡Hola ${member.name}! 💪 Te extrañamos en REP. Tenemos una oferta especial para que vuelvas. 🔥`,
-            Incentivo: `¡Hola ${member.name}! 👋 Notamos tu ausencia. ¡Te regalamos una clase de cortesía para tu regreso! 🔋`,
-            Default: `¡Hola ${member.name}! 👋 Queremos saber cómo vas con tus entrenamientos en REP. ⚡`
+            Reactivación: `¡Hola ${member.name}! 💪 Te extrañamos en ${settings.brandName}. Tenemos una oferta especial para que vuelvas. 🔥`,
+            Incentivo: `¡Hola ${member.name}! 👋 Notamos tu ausencia en ${settings.brandName}. ¡Te regalamos una clase de cortesía para tu regreso! 🔋`,
+            Default: `¡Hola ${member.name}! 👋 Queremos saber cómo vas con tus entrenamientos en ${settings.brandName}. ⚡`
         };
 
         const msg = msgs[type] || msgs.Default;

@@ -20,6 +20,7 @@ import PublicBooking from './pages/PublicBooking';
 import Analytics from './pages/Analytics';
 import Users from './pages/Users';
 import Expenses from './pages/Expenses';
+import BrandingSettings from './pages/BrandingSettings';
 import SupportButton from './components/SupportButton';
 import DemoModal from './components/DemoModal';
 import { useAuth } from './context/AuthContext';
@@ -77,6 +78,7 @@ function App() {
                         <Route path="/membresias" element={<Memberships />} />
                         <Route path="/visitas" element={<Visits />} />
                         <Route path="/usuarios" element={<Users />} />
+                        <Route path="/configuracion" element={<BrandingSettings />} />
                         
                         {/* Aliases for compatibility */}
                         <Route path="/members" element={<Navigate to="/miembros" replace />} />

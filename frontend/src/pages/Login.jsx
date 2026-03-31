@@ -87,6 +87,7 @@ const Login = () => {
                             type="submit"
                             className="cyber-btn-primary"
                             disabled={loading}
+                            style={{ borderRadius: settings.borderRadius }}
                         >
                             {loading ? (
                                 <span className="loading-dots">AUTENTICANDO</span>
@@ -101,7 +102,7 @@ const Login = () => {
                     <footer className="login-footer-minimal">
                         <div className="footer-line"></div>
                         <p className="v-tag">VERSION PROTOCOL 1.1.2</p>
-                        <p className="copy-tag">© REP CALISTHENICS ACADEMY</p>
+                        <p className="copy-tag">© {new Date().getFullYear()} {settings.brandName.toUpperCase()}</p>
                     </footer>
                 </div>
             </main>

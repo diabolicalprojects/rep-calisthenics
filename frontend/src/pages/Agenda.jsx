@@ -5,12 +5,16 @@ import {
     CalendarDays, Plus, Copy, Link2
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import HelpTooltip from '../components/HelpTooltip';
 import BaseModal from '../components/BaseModal';
 import SearchInput from '../components/SearchInput';
 import { fmtDate } from '../utils/formatters';
 
 const Agenda = () => {
+    const { isAdmin } = useAuth();
+    const { settings } = useTheme();
     const [appointments, setAppointments] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showLinkModal, setShowLinkModal] = useState(null);
@@ -72,7 +76,7 @@ const Agenda = () => {
     const updateStatus = async (id, status, apt = null) => {
         if (status === 'Cancelada' && apt?.phone) {
             if (window.confirm("¿Deseas enviar WhatsApp antes de cancelar?")) {
-                const msg = `Hola ${apt.memberName}, sobre tu solicitud en REP Calisthenics...`;
+                const msg = `Hola ${apt.memberName}, sobre tu solicitud en ${settings.brandName}...`;
                 window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
             }
         }
