@@ -143,7 +143,7 @@ const Expenses = () => {
 
             <ModuleMetricBar stats={[
                 { label: 'Egresos Mes', value: fmtCurrency(stats.totalMonthly), color: 'var(--color-danger)' },
-                { label: 'Categorías', value: categories.length, color: 'var(--color-accent-orange)' },
+                { label: 'Categorías', value: categories.length, color: 'var(--color-accent)' },
                 { label: 'Operaciones', value: expenses.length, color: '#4da6ff' },
                 { label: 'Impacto MRR', value: `${Math.round((stats.totalMonthly / 50000) * 100)}%`, color: 'var(--color-text-muted)' },
             ]} />

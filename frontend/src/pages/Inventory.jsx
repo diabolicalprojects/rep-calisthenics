@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Plus, Package, AlertTriangle, TrendingUp, TrendingDown, 
-    Trash2, Edit3, BarChart3, Boxes, ShoppingCart, 
+    Trash2, Edit3, BarChart2, Boxes, ShoppingCart, 
     ChevronRight, ArrowRight, Save, X
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -45,9 +45,9 @@ const Inventory = () => {
 
     useEffect(() => { fetchInventory(); }, []);
 
-    const filtered = items.filter(i => 
-        i.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        i.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = (items || []).filter(i => 
+        (i?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (i?.category || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleSubmit = async (e) => {
@@ -121,7 +121,7 @@ const Inventory = () => {
 
     const chartData = [
         { name: 'Disponible', value: items.filter(i => i.status === 'Disponible').length, color: 'var(--color-success)' },
-        { name: 'Crítico', value: items.filter(i => i.status === 'Poco Stock').length, color: 'var(--color-accent-orange)' },
+        { name: 'Crítico', value: items.filter(i => i.status === 'Poco Stock').length, color: 'var(--color-accent)' },
         { name: 'Agotado', value: items.filter(i => i.status === 'Agotado').length, color: 'var(--color-danger)' }
     ].filter(d => d.value > 0);
 
@@ -147,7 +147,7 @@ const Inventory = () => {
             </header>
 
             <ModuleMetricBar stats={[
-                { label: 'Referencias', value: items.length, color: 'var(--color-accent-orange)' },
+                { label: 'Referencias', value: items.length, color: 'var(--color-accent)' },
                 { label: 'Valorización', value: fmtCurrency(totalValue), color: 'var(--color-success)' },
                 { label: 'Stock Bajo', value: items.filter(i => i.status !== 'Disponible').length, color: 'var(--color-danger)' },
                 { label: 'Categorías', value: new Set(items.map(i => i.category)).size, color: '#4da6ff' },
@@ -177,7 +177,7 @@ const Inventory = () => {
                             </PieChart>
                         </ResponsiveContainer>
                         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                            <div style={{ fontSize: 28, fontWeight: 900, color: healthScore > 70 ? 'var(--color-success)' : 'var(--color-accent-orange)' }}>{healthScore}%</div>
+                            <div style={{ fontSize: 28, fontWeight: 900, color: healthScore > 70 ? 'var(--color-success)' : 'var(--color-accent)' }}>{healthScore}%</div>
                             <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>Salud</div>
                         </div>
                     </div>

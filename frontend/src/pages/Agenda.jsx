@@ -140,8 +140,8 @@ const Agenda = () => {
                                                 <Clock size={14} /> {apt.time} - {apt.title}
                                             </div>
                                             <div style={{ fontSize: 14, color: 'var(--color-text-muted)', marginTop: 4 }}>
-                                                Atleta: <span style={{ color: '#fff' }}>{apt.memberName}</span>
-                                                {apt.isLead && <span style={{ marginLeft: 8, fontSize: 10, background: 'var(--color-accent-orange)', color: '#000', padding: '2px 6px', borderRadius: 4, fontWeight: 'bold' }}>LEAD</span>}
+                                                Miembro: <span style={{ color: '#fff' }}>{apt.memberName}</span>
+                                                {apt.isLead && <span style={{ marginLeft: 8, fontSize: 10, background: 'var(--color-accent)', color: '#000', padding: '2px 6px', borderRadius: 4, fontWeight: 'bold' }}>LEAD</span>}
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', gap: 8 }}>
@@ -164,12 +164,12 @@ const Agenda = () => {
                 </div>
 
                 {/* SIDEBAR: PENDING */}
-                <div className="glass-panel" style={{ border: '1px solid var(--color-accent-orange)44' }}>
+                <div className="glass-panel" style={{ border: '1px solid var(--color-accent-glass)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <h3 style={{ fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-accent-orange)' }}>
+                        <h3 style={{ fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-accent)' }}>
                             <AlertCircle size={18} /> Pendientes
                         </h3>
-                        <span style={{ fontSize: 12, fontWeight: 800, background: 'var(--color-accent-orange)', color: '#000', padding: '2px 8px', borderRadius: 10 }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, background: 'var(--color-accent)', color: '#000', padding: '2px 8px', borderRadius: 10 }}>
                             {allPending.length}
                         </span>
                     </div>
@@ -178,7 +178,7 @@ const Agenda = () => {
                         {allPending.length === 0 ? (
                             <p className="text-muted" style={{ textAlign: 'center', fontSize: 12, padding: 20 }}>Sin solicitudes pendientes.</p>
                         ) : allPending.map(apt => (
-                            <div key={apt.id} className="glass-panel" style={{ padding: 16, background: 'var(--color-accent-orange)08', borderLeft: '4px solid var(--color-accent-orange)' }}>
+                            <div key={apt.id} className="glass-panel" style={{ padding: 16, background: 'var(--color-accent-glass)', borderLeft: '4px solid var(--color-accent)' }}>
                                 <div style={{ fontWeight: 700, fontSize: 14 }}>{apt.time} | {fmtDate(apt.date)}</div>
                                 <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{apt.title}</div>
                                 <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 12 }}>{apt.memberName}</div>
@@ -206,7 +206,7 @@ const Agenda = () => {
                             <input required className="form-input" placeholder="Ej. Clase muestra Calistenia" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                         </div>
                         <div className="form-group">
-                            <label>Atleta / Lead</label>
+                            <label>Miembro / Lead</label>
                             <input required className="form-input" placeholder="Nombre completo" value={formData.memberName} onChange={e => setFormData({...formData, memberName: e.target.value})} />
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

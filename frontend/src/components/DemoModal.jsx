@@ -12,13 +12,13 @@ const DemoModal = ({ isOpen, onClose }) => {
         >
             <div style={{ padding: '0 8px' }}>
                 <div style={{ 
-                    background: 'var(--color-accent-orange)22', 
+                    background: 'var(--color-accent)22', 
                     padding: '16px', 
                     borderRadius: '12px', 
                     display: 'flex', 
                     gap: '12px',
                     marginBottom: '24px',
-                    color: 'var(--color-accent-orange)'
+                    color: 'var(--color-accent)'
                 }}>
                     <Info size={24} style={{ flexShrink: 0 }} />
                     <p style={{ fontSize: '14px', lineHeight: '1.5', margin: 0 }}>

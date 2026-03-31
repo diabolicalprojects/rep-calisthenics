@@ -316,8 +316,8 @@ const PublicBooking = () => {
                 }
 
                 .step-dot.active {
-                    background: var(--color-accent-orange);
-                    box-shadow: 0 0 10px var(--color-accent-orange);
+                    background: var(--color-accent);
+                    box-shadow: 0 0 10px var(--color-accent);
                 }
 
                 .step-dot.completed {
@@ -359,7 +359,7 @@ const PublicBooking = () => {
 
                 .booking-input:focus {
                     background: rgba(255,255,255,0.08);
-                    border-color: var(--color-accent-orange);
+                    border-color: var(--color-accent);
                     box-shadow: 0 0 0 4px rgba(255, 115, 0, 0.1);
                 }
 
@@ -389,9 +389,9 @@ const PublicBooking = () => {
                 }
 
                 .slot-pill.selected {
-                    background: var(--color-accent-orange);
+                    background: var(--color-accent);
                     color: black;
-                    border-color: var(--color-accent-orange);
+                    border-color: var(--color-accent);
                     box-shadow: 0 10px 20px -10px rgba(255, 115, 0, 0.4);
                 }
 
@@ -414,7 +414,7 @@ const PublicBooking = () => {
                 .back-link {
                     background: none;
                     border: none;
-                    color: var(--color-accent-orange);
+                    color: var(--color-accent);
                     display: flex;
                     align-items: center;
                     gap: 5px;
@@ -435,7 +435,7 @@ const PublicBooking = () => {
                     background: rgba(255, 115, 0, 0.05);
                     padding: 15px 20px;
                     border-radius: 12px;
-                    border-left: 3px solid var(--color-accent-orange);
+                    border-left: 3px solid var(--color-accent);
                     display: flex;
                     flex-direction: column;
                     gap: 5px;
@@ -444,7 +444,7 @@ const PublicBooking = () => {
 
                 .review-label {
                     font-size: 10px;
-                    color: var(--color-accent-orange);
+                    color: var(--color-accent);
                     font-weight: 800;
                     letter-spacing: 1px;
                 }
@@ -485,7 +485,7 @@ const PublicBooking = () => {
                 .success-divider {
                     height: 2px;
                     width: 60px;
-                    background: var(--color-accent-orange);
+                    background: var(--color-accent);
                     margin: 20px auto;
                 }
 
@@ -502,7 +502,7 @@ const PublicBooking = () => {
                     padding: 10px 25px;
                     border-radius: 30px;
                     font-weight: 700;
-                    color: var(--color-accent-orange);
+                    color: var(--color-accent);
                     font-size: 14px;
                     border: 1px solid rgba(255,255,255,0.1);
                 }

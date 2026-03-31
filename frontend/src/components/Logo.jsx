@@ -20,7 +20,7 @@ const Logo = ({ animated = true, style = {}, className = '' }) => {
                     fontWeight: 900, 
                     fontSize: '22px', 
                     letterSpacing: '1px',
-                    color: 'var(--color-accent-orange)',
+                    color: 'var(--color-accent)',
                     whiteSpace: 'nowrap'
                 }}>
                     {settings.brandName.toUpperCase()}

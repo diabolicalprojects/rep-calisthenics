@@ -57,7 +57,9 @@ export const ThemeProvider = ({ children }) => {
 
     const applyTheme = (s) => {
         const root = document.documentElement;
-        root.style.setProperty('--color-accent-orange', s.accentColor);
+        root.style.setProperty('--color-accent', s.accentColor);
+        root.style.setProperty('--color-accent-hover', `${s.accentColor}dd`); // Subtle transparency for hover
+        root.style.setProperty('--color-accent-glass', `${s.accentColor}20`); // Glass effect fallback
         
         // Dynamic Radius
         const baseRadius = parseInt(s.borderRadius) || 0;
@@ -67,12 +69,15 @@ export const ThemeProvider = ({ children }) => {
         root.style.setProperty('--radius-xl', `${baseRadius * 2}px`);
         
         root.style.setProperty('--font-heading', s.font);
-        root.style.setProperty('--color-glass', `rgba(255, 255, 255, ${s.glassiness})`);
-        root.style.setProperty('--color-glass-border', `rgba(255, 255, 255, ${s.borderOpacity})`);
-        root.style.setProperty('--shadow-md', s.shadow || '0 10px 15px rgba(0, 0, 0, 0.5)');
         
-        // Derived colors
-        root.style.setProperty('--color-accent-orange-glass', `${s.accentColor}15`);
+        // Handle transparency based on color mode if needed, 
+        // but the 'glassiness' and 'borderOpacity' are sliders in the UI.
+        const isDark = document.body.getAttribute('data-theme') !== 'light';
+        const glassBase = isDark ? '255, 255, 255' : '0, 0, 0';
+        
+        root.style.setProperty('--color-glass', `rgba(${glassBase}, ${s.glassiness})`);
+        root.style.setProperty('--color-glass-border', `rgba(${glassBase}, ${s.borderOpacity})`);
+        root.style.setProperty('--shadow-md', s.shadow || '0 10px 15px rgba(0, 0, 0, 0.5)');
     };
 
     const updateSettings = (newSettings) => {

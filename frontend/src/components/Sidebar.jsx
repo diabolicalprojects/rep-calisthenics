@@ -104,7 +104,7 @@ const Sidebar = ({ onShowDemo }) => {
                         <button 
                             className="nav-link btn-ghost" 
                             onClick={onShowDemo}
-                            style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '10px', color: 'var(--color-accent-orange)' }}
+                            style={{ width: '100%', justifyContent: 'flex-start', marginBottom: '10px', color: 'var(--color-accent)' }}
                         >
                             <span className="nav-icon"><Info size={20} /></span>
                             <span className="nav-text">Ver Demo Info</span>

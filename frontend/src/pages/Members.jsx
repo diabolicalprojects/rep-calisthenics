@@ -10,10 +10,12 @@ import SearchInput from '../components/SearchInput';
 import MemberCard from '../features/members/MemberCard';
 import MemberDetailModal from '../features/members/MemberDetailModal';
 import { useMembersData } from '../features/members/useMembersData';
+import { useTheme } from '../context/ThemeContext';
 import { fmtDate, initials } from '../utils/formatters';
 import { api } from '../services/api';
 
 const Members = () => {
+    const { settings } = useTheme();
     const { 
         members, 
         loading, 
@@ -40,9 +42,12 @@ const Members = () => {
         fetchPlans();
     }, []);
 
-    const filtered = members.filter(m => {
-        const matchSearch = (m.name + m.email).toLowerCase().includes(search.toLowerCase());
-        const matchStatus = filterStatus === 'Todos' || m.status === filterStatus;
+    const filtered = (members || []).filter(m => {
+        const name = String(m?.name || '').toLowerCase();
+        const email = String(m?.email || '').toLowerCase();
+        const searchTerm = search.toLowerCase();
+        const matchSearch = name.includes(searchTerm) || email.includes(searchTerm);
+        const matchStatus = filterStatus === 'Todos' || (m?.status || '') === filterStatus;
         return matchSearch && matchStatus;
     });
 
@@ -69,14 +74,14 @@ const Members = () => {
             <header className="page-header stagger-1 flex-responsive">
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <h1 className="page-title">Comunidad {settings.brandName}</h1>
+                        <h1 className="page-title">Gestión de {settings.brandName}</h1>
                         <HelpTooltip
-                            title="Gestión de Miembros"
-                            content="CRM centralizado. Gestiona suscripciones, historial y perfiles de los atletas en un solo lugar."
+                            title="Miembros"
+                            content="CRM centralizado. Gestiona suscripciones, historial y perfiles en un solo lugar."
                         />
                     </div>
                     <p className="page-subtitle text-muted">
-                        Hay <span className="text-success" style={{ fontWeight: 700 }}>{(members || []).filter(m => (m.status || '').toLowerCase() === 'activo').length}</span> atletas entrenando hoy
+                        Hay <span className="text-success" style={{ fontWeight: 700 }}>{(members || []).filter(m => (m.status || '').toLowerCase() === 'activo').length}</span> usuarios activos hoy
                     </p>
                 </div>
                 <button className="btn-primary" onClick={() => setShowOnboarding(true)}>
@@ -86,8 +91,8 @@ const Members = () => {
 
             <ModuleMetricBar stats={[
                 { label: 'Suscritos', value: (members || []).filter(m => (m.status || '').toLowerCase() === 'activo').length, color: 'var(--color-success)' },
-                { label: 'Ex-Atletas', value: (members || []).filter(m => (m.status || '').toLowerCase() === 'inactivo').length, color: 'var(--color-danger)' },
-                { label: 'Ecosistema', value: (members || []).length, color: 'var(--color-accent-orange)' },
+                { label: 'Inactivos', value: (members || []).filter(m => (m.status || '').toLowerCase() === 'inactivo').length, color: 'var(--color-danger)' },
+                { label: 'Ecosistema', value: (members || []).length, color: '#ffbd2e' },
                 { label: 'Segmentados', value: (filtered || []).length, color: '#4da6ff' },
             ]} />
 
@@ -108,7 +113,7 @@ const Members = () => {
                                     fontSize: '11px', 
                                     fontWeight: 700,
                                     borderRadius: 8,
-                                    background: filterStatus === f ? 'var(--color-accent-orange)' : 'transparent',
+                                    background: filterStatus === f ? 'var(--color-accent)' : 'transparent',
                                     color: filterStatus === f ? '#000' : 'inherit',
                                     border: 'none'
                                 }}
@@ -145,7 +150,7 @@ const Members = () => {
                     </div>
                     <h3 style={{ fontSize: 18, marginBottom: 8 }}>Sin Resultados</h3>
                     <p style={{ color: 'var(--color-text-muted)', maxWidth: 400, margin: '0 auto' }}>
-                        No encontramos atletas que coincidan con <strong>"{search}"</strong> en el segmento de <strong>{filterStatus}</strong>.
+                        No encontramos registros que coincidan con <strong>"{search}"</strong> en el segmento de <strong>{filterStatus}</strong>.
                     </p>
                     <button className="btn-ghost" style={{ marginTop: 24 }} onClick={() => { setSearch(''); setFilterStatus('Todos'); }}>Limpiar Filtros</button>
                 </div>
@@ -163,7 +168,7 @@ const Members = () => {
                         <table className="modern-table clickable-rows">
                             <thead>
                                 <tr>
-                                    <th>Atleta</th>
+                                    <th>Persona</th>
                                     <th>Plan Contratado</th>
                                     <th>Próximo Corte</th>
                                     <th>Estado</th>
@@ -175,7 +180,7 @@ const Members = () => {
                                     <tr key={m.id} onClick={() => setSelectedMember(m)}>
                                         <td data-label="Atleta">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                                                <div className="avatar-small" style={{ background: 'var(--color-accent-orange)15', color: 'var(--color-accent-orange)', fontWeight: 800 }}>
+                                                <div className="avatar-small" style={{ background: 'var(--color-accent)15', color: 'var(--color-accent)', fontWeight: 800 }}>
                                                     {initials(m.name)}
                                                 </div>
                                                 <div>
@@ -229,8 +234,8 @@ const Members = () => {
 
             <ConfirmModal 
                 isOpen={!!confirmDeleteId}
-                title="¿Eliminar miembro?"
-                message="Esta acción es irreversible. Se perderá todo el historial de pagos, asistencias y rutinas del atleta."
+                title="¿Eliminar registro?"
+                message="Esta acción es irreversible. Se perderá todo el historial de pagos, asistencias y datos de este usuario."
                 onConfirm={handleDelete}
                 onCancel={() => setConfirmDeleteId(null)}
                 type="danger"

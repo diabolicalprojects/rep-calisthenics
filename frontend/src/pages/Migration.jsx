@@ -22,7 +22,7 @@ const Migration = () => {
             <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 20px', position: 'relative', overflow: 'hidden' }}>
                 {/* Background Decoration */}
                 <div style={{ position: 'absolute', top: '-10%', right: '-10%', opacity: 0.05 }}>
-                    <Database size={300} color="var(--color-accent-orange)" />
+                    <Database size={300} color="var(--color-accent)" />
                 </div>
 
                 <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
@@ -42,7 +42,7 @@ const Migration = () => {
                             <p className="text-muted" style={{ fontSize: '12px' }}>Procesamiento inteligente de columnas y formatos.</p>
                         </div>
                         <div className="glass-panel" style={{ padding: '20px', background: 'rgba(255,255,255,0.03)' }}>
-                            <ShieldAlert style={{ color: 'var(--color-accent-orange)', marginBottom: '10px' }} />
+                            <ShieldAlert style={{ color: 'var(--color-accent)', marginBottom: '10px' }} />
                             <h4 style={{ marginBottom: '8px' }}>Validación de Datos</h4>
                             <p className="text-muted" style={{ fontSize: '12px' }}>Evita duplicados y errores de captura automáticamente.</p>
                         </div>
@@ -66,10 +66,10 @@ const Migration = () => {
                 <div className="glass-panel" style={{ padding: '24px' }}>
                     <h3 style={{ marginBottom: '15px' }}>¿Qué puedes migrar?</h3>
                     <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-text-muted)', fontSize: '15px' }}>
-                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent-orange)', borderRadius: '50%' }}></div> Base de datos de Miembros</li>
-                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent-orange)', borderRadius: '50%' }}></div> Catálogo de Inventario</li>
-                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent-orange)', borderRadius: '50%' }}></div> Historial de Pagos</li>
-                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent-orange)', borderRadius: '50%' }}></div> Rutinas y Planificaciones</li>
+                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent)', borderRadius: '50%' }}></div> Base de datos de Miembros</li>
+                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent)', borderRadius: '50%' }}></div> Catálogo de Inventario</li>
+                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent)', borderRadius: '50%' }}></div> Historial de Pagos</li>
+                        <li style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ width: '6px', height: '6px', background: 'var(--color-accent)', borderRadius: '50%' }}></div> Rutinas y Planificaciones</li>
                     </ul>
                 </div>
             </div>

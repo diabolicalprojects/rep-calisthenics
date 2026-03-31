@@ -17,7 +17,7 @@ const NotFound = () => {
                 <div style={{ background: 'var(--color-danger)15', width: 80, height: 80, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px', color: 'var(--color-danger)' }}>
                     <ShieldAlert size={48} />
                 </div>
-                <h1 style={{ fontSize: 64, fontWeight: 900, marginBottom: 8, color: 'var(--color-accent-orange)' }}>404</h1>
+                <h1 style={{ fontSize: 64, fontWeight: 900, marginBottom: 8, color: 'var(--color-accent)' }}>404</h1>
                 <h2 style={{ fontSize: 24, marginBottom: 16 }}>ZONA RESTRINGIDA</h2>
                 <p style={{ color: 'var(--color-text-muted)', lineHeight: '1.6', marginBottom: 40 }}>
                     La sección a la que intentas acceder no existe en este servidor o está bajo mantenimiento en el CORE.

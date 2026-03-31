@@ -142,7 +142,7 @@ const Dashboard = () => {
                                 textTransform: 'uppercase',
                                 minHeight: '34px',
                                 borderRadius: 8,
-                                background: range === r ? 'var(--color-accent-orange)' : 'transparent',
+                                background: range === r ? 'var(--color-accent)' : 'transparent',
                                 color: range === r ? '#000' : 'inherit',
                                 border: 'none'
                             }}
@@ -255,7 +255,7 @@ const Dashboard = () => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             {[
-                                { time: '10:30 AM', title: 'Front Lever Masterclass', coach: 'Coach Alex', color: 'var(--color-accent-orange)' },
+                                { time: '10:30 AM', title: 'Front Lever Masterclass', coach: 'Coach Alex', color: 'var(--color-accent)' },
                                 { time: '05:00 PM', title: 'Push Day (Empuje)', coach: 'Coach Elena', color: 'var(--color-success)' },
                                 { time: '07:00 PM', title: 'Basic Calisthenics', coach: 'Coach Alex', color: 'var(--color-blue)' }
                             ].map((item, idx) => (

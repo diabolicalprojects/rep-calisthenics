@@ -157,7 +157,7 @@ const Login = () => {
                     transform: translateX(-50%);
                     width: 60%;
                     height: 1px;
-                    background: linear-gradient(90deg, transparent, var(--color-accent-orange), transparent);
+                    background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
                 }
 
                 .login-header {
@@ -184,7 +184,7 @@ const Login = () => {
                 .login-subtitle {
                     font-size: 10px;
                     letter-spacing: 3px;
-                    color: var(--color-accent-orange);
+                    color: var(--color-accent);
                     font-weight: 800;
                     opacity: 0.8;
                 }
@@ -223,7 +223,7 @@ const Login = () => {
 
                 .cyber-input:focus {
                     background: rgba(255,255,255,0.07);
-                    border-color: var(--color-accent-orange);
+                    border-color: var(--color-accent);
                     box-shadow: 0 0 20px rgba(255, 115, 0, 0.1);
                     transform: translateY(-1px);
                 }
@@ -231,7 +231,7 @@ const Login = () => {
                 .cyber-btn-primary {
                     width: 100%;
                     height: 60px;
-                    background: var(--color-accent-orange);
+                    background: var(--color-accent);
                     color: black;
                     border: none;
                     border-radius: 16px;

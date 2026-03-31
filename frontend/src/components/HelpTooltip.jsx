@@ -28,7 +28,7 @@ const HelpTooltip = ({ title, content, videoUrl }) => {
             <button
                 ref={btnRef}
                 className="btn-ghost"
-                style={{ padding: '2px 6px', marginLeft: '8px', color: 'var(--color-accent-orange)', minHeight: 'unset', border: 'none', background: 'transparent', lineHeight: 1 }}
+                style={{ padding: '2px 6px', marginLeft: '8px', color: 'var(--color-accent)', minHeight: 'unset', border: 'none', background: 'transparent', lineHeight: 1 }}
                 onClick={open}
                 title="Ayuda / Tutorial"
             >
@@ -44,7 +44,7 @@ const HelpTooltip = ({ title, content, videoUrl }) => {
                         left: pos.left,
                         width: '300px',
                         background: 'var(--color-bg-secondary, #1a1a1a)',
-                        border: '1px solid var(--color-accent-orange)',
+                        border: '1px solid var(--color-accent)',
                         borderRadius: '12px',
                         padding: '18px',
                         zIndex: 2147483647,
@@ -54,8 +54,8 @@ const HelpTooltip = ({ title, content, videoUrl }) => {
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                        <BookOpen size={15} color="var(--color-accent-orange)" />
-                        <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--color-accent-orange)', flex: 1 }}>{title}</h4>
+                        <BookOpen size={15} color="var(--color-accent)" />
+                        <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--color-accent)', flex: 1 }}>{title}</h4>
                         <button
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-text-muted, #888)', lineHeight: 1 }}
                             onClick={() => setIsOpen(false)}

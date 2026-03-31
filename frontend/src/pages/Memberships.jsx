@@ -98,7 +98,7 @@ const Memberships = () => {
                         <p className="text-muted">No has creado planes de membresía aún.</p>
                     </div>
                 ) : (plans || []).map(plan => (
-                    <div key={plan.id} className="glass-panel pulse-hover" style={{ padding: 0, overflow: 'hidden', borderTop: '4px solid var(--color-accent-orange)' }}>
+                    <div key={plan.id} className="glass-panel pulse-hover" style={{ padding: 0, overflow: 'hidden', borderTop: '4px solid var(--color-accent)' }}>
                         <div style={{ padding: '24px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                 <div style={{ maxWidth: '70%' }}>

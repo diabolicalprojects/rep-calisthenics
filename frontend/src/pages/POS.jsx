@@ -203,13 +203,13 @@ const POS = () => {
                         <h1 className="page-title">Punto de Venta</h1>
                         <HelpTooltip title="POS Inteligente" content="Procesa ventas de productos, renovaciones de membresía y entradas diarias de forma ágil." />
                     </div>
-                    <p className="page-subtitle text-muted">Operado por: <span className="text-orange" style={{ fontWeight: 700 }}>{cashierName}</span></p>
+                    <p className="page-subtitle text-muted">Operado por: <span className="text-accent" style={{ fontWeight: 700 }}>{cashierName}</span></p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <button className="btn-ghost" onClick={() => { fetchInventory(); fetchMembers(); }} title="Sincronizar Datos">
                         <RefreshCw size={18} />
                     </button>
-                    <button className="btn-ghost" onClick={handleCloseRegister} style={{ color: 'var(--color-accent-orange)', border: '1px solid var(--color-accent-orange)33' }}>
+                    <button className="btn-ghost" onClick={handleCloseRegister} style={{ color: 'var(--color-accent)', border: '1px solid var(--color-accent-glass)' }}>
                         <Lock size={18} /> CERRAR TURNO
                     </button>
                 </div>
@@ -217,7 +217,7 @@ const POS = () => {
 
             <ModuleMetricBar stats={[
                 { label: 'Ventas del Turno', value: fmtCurrency(cashRegister.totalSales || 0), color: 'var(--color-success)' },
-                { label: 'Transacciones', value: cashRegister.transactionsCount || 0, color: 'var(--color-accent-orange)' },
+                { label: 'Transacciones', value: cashRegister.transactionsCount || 0, color: 'var(--color-accent)' },
                 { label: 'Fondo Inicial', value: fmtCurrency(cashRegister.initialAmount || 0), color: '#4da6ff' },
                 { label: 'Efectivo en Caja', value: fmtCurrency(cashRegister.initialAmount + (cashRegister.totalSales || 0)), color: 'var(--color-text-muted)' },
             ]} />
@@ -244,7 +244,7 @@ const POS = () => {
                                     justifyContent: 'center',
                                     gap: 8,
                                     borderRadius: 10,
-                                    background: activeTab === tab.id ? 'var(--color-accent-orange)' : 'transparent',
+                                    background: activeTab === tab.id ? 'var(--color-accent)' : 'transparent',
                                     color: activeTab === tab.id ? '#000' : 'inherit'
                                 }}
                                 onClick={() => setActiveTab(tab.id)}
@@ -256,7 +256,7 @@ const POS = () => {
 
                     <div style={{ marginBottom: 24 }}>
                         <SearchInput 
-                            placeholder={`Buscar por ${activeTab === 'retail' ? 'nombre de producto' : 'nombre del atleta'}...`} 
+                            placeholder={`Buscar por ${activeTab === 'retail' ? 'nombre de producto' : 'nombre del miembro'}...`} 
                             value={searchTerm} 
                             onChange={e => setSearchTerm(e.target.value)} 
                         />
@@ -309,7 +309,7 @@ const POS = () => {
                                             <div style={{ fontSize: 10, color: 'var(--color-text-muted)' }}>{m.plan}</div>
                                         </div>
                                     </div>
-                                    <div style={{ fontSize: 12, fontWeight: '800', background: 'var(--color-accent-orange)15', color: 'var(--color-accent-orange)', textAlign: 'center', padding: '6px', borderRadius: 8 }}>
+                                    <div style={{ fontSize: 12, fontWeight: '800', background: 'var(--color-accent-glass)', color: 'var(--color-accent)', textAlign: 'center', padding: '6px', borderRadius: 8 }}>
                                         COBRAR RENOVACIÓN
                                     </div>
                                 </div>
@@ -322,10 +322,10 @@ const POS = () => {
                                     padding: '32px 24px', 
                                     textAlign: 'center', 
                                     cursor: 'pointer',
-                                    border: '2px dashed var(--color-accent-orange)33',
+                                    border: '2px dashed var(--color-accent)33',
                                     background: 'linear-gradient(135deg, rgba(255,115,0,0.05) 0%, rgba(0,0,0,0) 100%)'
                                 }} onClick={() => addToCart({ id: 'visit-regular', name: 'Pase de Día (Regular)', price: 100 }, 'visit')}>
-                                    <div className="icon-wrapper orange" style={{ width: 48, height: 48, margin: '0 auto 16px' }}>
+                                    <div className="icon-wrapper accent" style={{ width: 48, height: 48, margin: '0 auto 16px' }}>
                                         <Ticket size={24} />
                                     </div>
                                     <div style={{ fontWeight: '800', fontSize: 16 }}>Acceso Diario</div>
@@ -351,9 +351,9 @@ const POS = () => {
                 </div>
 
                 {/* Checkout Column */}
-                <div className="glass-panel stagger-3" style={{ padding: 0, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent-orange)33', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                <div className="glass-panel stagger-3" style={{ padding: 0, boxShadow: '0 20px 40px rgba(0,0,0,0.4)', borderColor: 'var(--color-accent)33', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                     <div style={{ padding: 24, borderBottom: '1px solid var(--color-glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 800 }}><ShoppingCart size={22} className="text-orange" /> Ticket Actual</h3>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 800 }}><ShoppingCart size={22} className="text-accent" /> Ticket Actual</h3>
                         <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: 4 }}>{cart.length} ITEMS</span>
                     </div>
 
@@ -403,7 +403,7 @@ const POS = () => {
 
                         <button 
                             className="btn-primary" 
-                            style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, boxShadow: '0 10px 20px rgba(255,115,0,0.2)' }} 
+                            style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, boxShadow: `0 10px 20px var(--color-accent-glass)` }} 
                             disabled={cart.length === 0 || processing} 
                             onClick={handleCheckout}
                         >
@@ -438,7 +438,7 @@ const POS = () => {
                         }}>
                             {/* Decorative Cutout Edge */}
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-around' }}>
-                                {Array(20).fill(0).map((_, i) => <div key={i} style={{ width: 10, height: 10, background: 'var(--color-bg-primary)', borderRadius: '50%', marginTop: -5 }} />)}
+                                {Array(20).fill(0).map((_, i) => <div key={i} style={{ width: 10, height: 10, background: 'var(--color-bg-secondary)', borderRadius: '50%', marginTop: -5 }} />)}
                             </div>
 
                             <div style={{ textAlign: 'center', fontWeight: '900', fontSize: 16, marginBottom: 8, letterSpacing: 2 }}>{settings.brandName.toUpperCase()}</div>

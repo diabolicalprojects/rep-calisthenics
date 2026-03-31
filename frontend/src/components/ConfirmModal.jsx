@@ -13,7 +13,7 @@ const ConfirmModal = ({
 }) => {
     if (!isOpen) return null;
 
-    const accentColor = type === 'danger' ? 'var(--color-danger)' : type === 'warning' ? 'var(--color-accent-orange)' : '#4da6ff';
+    const accentColor = type === 'danger' ? 'var(--color-danger)' : type === 'warning' ? 'var(--color-accent)' : '#4da6ff';
 
     return (
         <div className="modal-overlay" style={{ zIndex: 999999 }}>

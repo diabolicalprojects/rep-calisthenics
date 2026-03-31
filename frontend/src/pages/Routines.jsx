@@ -116,14 +116,14 @@ const Routines = () => {
                     <div key={routine.id} className="glass-panel pulse-hover" style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
                         <div style={{ padding: 24, flex: 1 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--color-accent-orange)15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
+                                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--color-accent)15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>
                                     {routine.icon}
                                 </div>
                                 <span className="status-badge warning" style={{ fontSize: 10 }}>{routine.level.toUpperCase()}</span>
                             </div>
 
                             <h3 style={{ fontSize: 20, marginBottom: 4 }}>{routine.name}</h3>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-accent-orange)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 16 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-accent)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', marginBottom: 16 }}>
                                 <Target size={12} /> {routine.focus}
                             </div>
 

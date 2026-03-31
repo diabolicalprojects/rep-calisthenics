@@ -7,7 +7,7 @@ const MemberCard = ({ member, onClick }) => {
     const isExpiringSoon = !isExpired && member.expiration_date && 
         (new Date(member.expiration_date) - new Date()) / (1000 * 60 * 60 * 24) < 5;
 
-    const statusColor = isExpired ? 'var(--color-danger)' : isExpiringSoon ? 'var(--color-accent-orange)' : 'var(--color-success)';
+    const statusColor = isExpired ? 'var(--color-danger)' : isExpiringSoon ? 'var(--color-accent)' : 'var(--color-success)';
 
     return (
         <div 

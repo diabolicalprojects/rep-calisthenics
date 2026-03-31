@@ -4,12 +4,12 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #050505;
+    background-color: var(--color-bg-main);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    transition: opacity 0.8s ease;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
 }
 
@@ -17,94 +17,80 @@
     opacity: 0;
 }
 
+.splash-background-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--color-accent-glass) 0%, transparent 70%);
+    opacity: 0.3;
+    animation: pulseGlow 4s infinite alternate;
+}
+
 .splash-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 48px;
     z-index: 10;
 }
 
 .splash-logo-wrapper {
-    width: 180px;
-    height: auto;
-    filter: drop-shadow(0 0 20px rgba(255, 115, 0, 0.4));
-    animation: logoEnter 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    width: clamp(140px, 20vw, 180px);
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+    animation: logoFloat 3s ease-in-out infinite;
 }
 
-.scanning-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: linear-gradient(to bottom, transparent, var(--color-accent-orange), transparent);
-    box-shadow: 0 0 15px var(--color-accent-orange);
-    opacity: 0.3;
-    z-index: 5;
-    animation: scanLine 3s linear infinite;
-}
-
-.initialization-sequence {
+.status-sequence {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    width: 250px;
+    gap: 20px;
 }
 
-.progress-bar-container {
-    width: 100%;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: var(--color-accent-orange);
-    box-shadow: 0 0 10px var(--color-accent-orange);
-    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.init-text {
-    font-size: 10px;
-    letter-spacing: 2px;
-    font-weight: 800;
-    color: var(--color-accent-orange);
+.status-text {
+    font-size: 14px;
+    letter-spacing: 6px;
+    font-weight: 700;
+    color: var(--color-text-main);
     text-transform: uppercase;
     text-align: center;
-    min-height: 1.2em;
+    animation: textAppear 0.5s ease-out forwards;
+    font-family: var(--font-heading);
 }
 
-.cursor-blink {
-    animation: blink 0.8s step-end infinite;
+.loading-dot-bar {
+    display: flex;
+    gap: 8px;
 }
 
-.vignette-overlay {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle, transparent 20%, black 150%);
-    pointer-events: none;
-    z-index: 2;
+.dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: dotPulse 1.5s infinite;
 }
 
-@keyframes scanLine {
-    0% { top: -5%; }
-    100% { top: 105%; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulseGlow {
+    0% { transform: scale(1); opacity: 0.2; }
+    100% { transform: scale(1.2); opacity: 0.4; }
 }
 
-@keyframes logoEnter {
-    0% { transform: scale(0.8); opacity: 0; filter: blur(10px); }
-    100% { transform: scale(1); opacity: 1; filter: blur(0); }
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
 }
 
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+@keyframes textAppear {
+    from { transform: translateY(10px); opacity: 0; filter: blur(4px); }
+    to { transform: translateY(0); opacity: 0.8; filter: blur(0); }
 }
 
-.mono-font {
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.5); opacity: 1; }
 }

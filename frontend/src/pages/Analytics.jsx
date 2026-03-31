@@ -131,7 +131,7 @@ const Analytics = () => {
 
             <div className="responsive-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(180px, 45%, 280px), 1fr))', gap: 16, marginTop: 32 }}>
                 <StatCard label="Miembros Activos" value={kpi.active} color="var(--color-success)" icon={Users} trend={12} />
-                <StatCard label="Ingresos Totales" value={fmtCurrency(kpi.revenue)} color="var(--color-accent-orange)" icon={CreditCard} trend={5} />
+                <StatCard label="Ingresos Totales" value={fmtCurrency(kpi.revenue)} color="var(--color-accent)" icon={CreditCard} trend={5} />
                 <StatCard label="Riesgo Retención" value={kpi.churn} color="var(--color-danger)" icon={AlertCircle} />
                 <StatCard label="Ventas Realizadas" value={kpi.txCount} color="#4da6ff" icon={Activity} />
                 <StatCard label="Stock Crítico" value={kpi.critical} color="var(--color-danger)" icon={Package} />
@@ -165,15 +165,15 @@ const Analytics = () => {
                         <AreaChart data={growthData}>
                             <defs>
                                 <linearGradient id="colorAltas" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="var(--color-accent-orange)" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="var(--color-accent-orange)" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                             <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} />
                             <YAxis axisLine={false} tickLine={false} tick={{fill: '#666', fontSize: 12}} />
                             <RTooltip content={<ChartTip suffix=" altas" />} />
-                            <Area type="monotone" dataKey="altas" stroke="var(--color-accent-orange)" fillOpacity={1} fill="url(#colorAltas)" strokeWidth={3} />
+                            <Area type="monotone" dataKey="altas" stroke="var(--color-accent)" fillOpacity={1} fill="url(#colorAltas)" strokeWidth={3} />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>

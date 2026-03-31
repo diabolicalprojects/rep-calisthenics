@@ -36,7 +36,7 @@ app.use('/api/inventory', inventoryRoutes);
 
 // Rutas base (MVP)
 app.get('/api', (req, res) => {
-    res.json({ message: 'Bienvenido a la API de REP Calisthenics Gym Management' });
+    res.json({ message: 'Bienvenido a la API de Gym Gym Management' });
 });
 
 // Endpoint ejemplo: Obtener estadísticas para el dashboard

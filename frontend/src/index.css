@@ -6,9 +6,9 @@
   --color-glass-border: rgba(255, 255, 255, 0.08);
   --color-glass-hover: rgba(255, 255, 255, 0.07);
   
-  --color-accent-orange: #f48c25;
-  --color-accent-orange-hover: #ff9e3b;
-  --color-accent-orange-glass: rgba(244, 140, 37, 0.1);
+  --color-accent: #f48c25;
+  --color-accent-hover: #ff9e3b;
+  --color-accent-glass: rgba(244, 140, 37, 0.1);
   --color-accent-blue: #0070f3;
   
   --color-text-main: #ffffff;
@@ -42,7 +42,7 @@
   --color-glass-hover: rgba(0, 0, 0, 0.06);
   --color-text-main: #1a1c1e;
   --color-text-muted: #606770;
-  --color-accent-orange-glass: rgba(244, 140, 37, 0.08);
+  --color-accent-glass: rgba(244, 140, 37, 0.08);
   --color-success: #1fb35a;
   --color-danger: #e02e2e;
 }
@@ -71,7 +71,7 @@ body {
   background: var(--color-glass-border); 
   border-radius: 10px; 
 }
-::-webkit-scrollbar-thumb:hover { background: var(--color-accent-orange); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
 
 /* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
@@ -82,7 +82,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 p, span { overflow-wrap: break-word; }
 
-.text-orange { color: var(--color-accent-orange); }
+.text-accent { color: var(--color-accent); }
 .text-muted { color: var(--color-text-muted); }
 .text-success { color: var(--color-success); }
 .text-danger { color: var(--color-danger); }
@@ -220,14 +220,14 @@ p, span { overflow-wrap: break-word; }
 }
 
 .btn-primary {
-  background-color: var(--color-accent-orange);
+  background-color: var(--color-accent);
   color: #000;
   font-weight: 600;
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-orange-hover);
+  background-color: var(--color-accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(244, 140, 37, 0.2);
+  box-shadow: 0 4px 12px var(--color-accent-glass);
 }
 
 .btn-ghost {
@@ -256,9 +256,9 @@ p, span { overflow-wrap: break-word; }
   transition: all 0.2s ease;
 }
 .form-input:focus {
-  border-color: var(--color-accent-orange);
+  border-color: var(--color-accent);
   background: var(--color-glass-hover);
-  box-shadow: 0 0 0 4px rgba(244, 140, 37, 0.15);
+  box-shadow: 0 0 0 4px var(--color-accent-glass);
 }
 
 .form-group {

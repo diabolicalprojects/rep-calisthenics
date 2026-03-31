@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Clock, Users, BarChart3, Search, Calendar, ChevronRight } from 'lucide-react';
+import { UserCheck, Clock, Users, BarChart2, Search, Calendar, ChevronRight } from 'lucide-react';
 import { api } from '../services/api';
 import BaseModal from '../components/BaseModal';
 import SearchInput from '../components/SearchInput';
@@ -75,7 +75,7 @@ const Visits = () => {
             <header className="page-header stagger-1 flex-responsive">
                 <div>
                     <h1 className="page-title">Asistencia y Visitas</h1>
-                    <p className="page-subtitle text-muted">Registro de ingresos de atletas en tiempo real</p>
+                    <p className="page-subtitle text-muted">Registro de ingresos en tiempo real</p>
                 </div>
                 <button className="btn-primary" onClick={() => setShowModal(true)}>
                     <UserCheck size={18} /> Registrar Registro
@@ -86,7 +86,7 @@ const Visits = () => {
                 <div className="glass-panel metric-card">
                     <div className="metric-header">
                         <span className="text-muted">Visitas Hoy</span>
-                        <div className="icon-wrapper orange"><Clock size={20} /></div>
+                        <div className="icon-wrapper accent"><Clock size={20} /></div>
                     </div>
                     <div className="metric-value">{stats.today}</div>
                 </div>
@@ -99,8 +99,8 @@ const Visits = () => {
                 </div>
                 <div className="glass-panel metric-card">
                     <div className="metric-header">
-                        <span className="text-muted">Atleta más recurrente</span>
-                        <div className="icon-wrapper green"><Users size={20} /></div>
+                        <span className="text-muted">Miembro más recurrente</span>
+                        <div className="icon-wrapper accent"><Users size={20} /></div>
                     </div>
                     <div className="metric-value" style={{ fontSize: 18, marginTop: 12 }}>{stats.topMember}</div>
                 </div>
@@ -114,7 +114,7 @@ const Visits = () => {
                     <table className="modern-table">
                         <thead>
                             <tr>
-                                <th>Atleta</th>
+                                <th>Miembro</th>
                                 <th>Plan / Membresía</th>
                                 <th>Fecha y Hora</th>
                                 <th style={{ textAlign: 'right' }}>Acceso</th>
@@ -127,9 +127,9 @@ const Visits = () => {
                                 <tr><td colSpan="4" style={{ textAlign: 'center', padding: 40, opacity: 0.5 }}>No hay visitas registradas aún.</td></tr>
                             ) : visits.map(visit => (
                                 <tr key={visit.id}>
-                                    <td data-label="Atleta">
+                                    <td data-label="Miembro">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-accent-orange)15', color: 'var(--color-accent-orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>
+                                            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-accent-glass)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13 }}>
                                                 {visit.member_name?.charAt(0)}
                                             </div>
                                             <span style={{ fontWeight: 600 }}>{visit.member_name}</span>
@@ -139,10 +139,10 @@ const Visits = () => {
                                     <td data-label="Fecha/Hora">
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                                             <span>{fmtDate(visit.timestamp)}</span>
-                                            <span style={{ fontSize: 11, color: 'var(--color-accent-orange)' }}>{fmtTime(visit.timestamp)}</span>
+                                            <span style={{ fontSize: 11, color: 'var(--color-accent)' }}>{fmtTime(visit.timestamp)}</span>
                                         </div>
                                     </td>
-                                    <td data-label="Acceso" style={{ textAlign: 'right' }}>
+ drum                                    <td data-label="Acceso" style={{ textAlign: 'right' }}>
                                         <span className="status-badge success">EXITOSO</span>
                                     </td>
                                 </tr>
@@ -175,7 +175,7 @@ const Visits = () => {
                                 }}
                                 onClick={() => registerVisit(member)}
                             >
-                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-accent-orange)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--color-accent)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
                                     {member.name.charAt(0)}
                                 </div>
                                 <div style={{ flex: 1 }}>

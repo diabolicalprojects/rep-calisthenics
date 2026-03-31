@@ -44,7 +44,7 @@ router.post('/', async (req, res) => {
     // Notificación de bienvenida
     await query(
       'INSERT INTO notifications_log (member_id, member_name, type, message) VALUES ($1, $2, $3, $4)',
-      [newMember.id, newMember.name, 'welcome', `¡Bienvenido ${newMember.name}! Es un gusto tenerte en REP Calisthenics.`]
+      [newMember.id, newMember.name, 'welcome', `¡Bienvenido ${newMember.name}! Es un gusto tenerte en Gym.`]
     );
 
     res.status(201).json(newMember);

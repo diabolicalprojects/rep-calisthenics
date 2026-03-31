@@ -111,13 +111,13 @@ const Payments = () => {
 
                 <div className="glass-panel pulse-hover stagger-4">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                        <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Atletas por Plan</span>
-                        <div className="icon-wrapper blue" style={{ width: 32, height: 32 }}><Filter size={16} /></div>
+                        <span className="text-muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>Miembros por Plan</span>
+                        <div className="icon-wrapper accent" style={{ width: 32, height: 32 }}><Filter size={16} /></div>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                         {Object.entries(metrics.plansDistribution).map(([plan, count]) => (
                             <div key={plan} style={{ fontSize: 12, padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 6 }}>
-                                <span className="text-orange" style={{ fontWeight: 700 }}>{count}</span> {plan}
+                                <span className="text-accent" style={{ fontWeight: 700 }}>{count}</span> {plan}
                             </div>
                         ))}
                     </div>
@@ -137,7 +137,7 @@ const Payments = () => {
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Atleta</th>
+                                <th>Miembro</th>
                                 <th>Concepto</th>
                                 <th>Monto</th>
                                 <th>Estado</th>
@@ -152,7 +152,7 @@ const Payments = () => {
                             ) : filteredPayments.map(p => (
                                 <tr key={p.id}>
                                     <td data-label="Fecha" style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>{fmtDate(p.date)}</td>
-                                    <td data-label="Atleta"><span style={{ fontWeight: 600 }}>{p.memberName}</span></td>
+                                    <td data-label="Miembro"><span style={{ fontWeight: 600 }}>{p.memberName}</span></td>
                                     <td data-label="Concepto" style={{ fontSize: 13 }}>{p.concept}</td>
                                     <td data-label="Monto"><strong style={{ fontSize: 16 }}>{fmtCurrency(p.amount)}</strong></td>
                                     <td data-label="Estado">
@@ -176,7 +176,7 @@ const Payments = () => {
             <BaseModal isOpen={showModal} onClose={() => setShowModal(false)} title="Registrar Transacción">
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                     <div className="form-group">
-                        <label>Atleta / Miembro</label>
+                        <label>Miembro / Cliente</label>
                         <input required className="form-input" placeholder="Nombre completo" value={formData.memberName} onChange={e => setFormData({...formData, memberName: e.target.value})} />
                     </div>
                     <div className="form-group">
@@ -186,7 +186,7 @@ const Payments = () => {
                     <div className="form-group">
                         <label>Monto</label>
                         <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-orange)', fontWeight: 700 }}>$</span>
+                            <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent)', fontWeight: 700 }}>$</span>
                             <input required type="number" className="form-input" style={{ paddingLeft: 32 }} placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
                         </div>
                     </div>

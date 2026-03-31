@@ -24,7 +24,7 @@ const ModuleMetricBar = ({ stats = [], moduleName = '' }) => {
             {stats.map((s, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 'min(100px, 45%)', flex: 1 }}>
                     <span style={{ fontSize: 10, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{s.label}</span>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: s.color || 'var(--color-accent-orange)', lineHeight: 1 }}>{s.value}</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: s.color || 'var(--color-accent)', lineHeight: 1 }}>{s.value}</span>
                     {s.trend !== undefined && (
                         <span style={{ fontSize: 10, color: s.trend >= 0 ? 'var(--color-success)' : 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 2 }}>
                             {s.trend >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -35,7 +35,7 @@ const ModuleMetricBar = ({ stats = [], moduleName = '' }) => {
             ))}
 
             {/* Link to full analytics */}
-            <a href="/analytics" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-accent-orange)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <a href="/analytics" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--color-accent)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 <BarChart2 size={12} /> Ver Analytics <ArrowUpRight size={11} />
             </a>
         </div>

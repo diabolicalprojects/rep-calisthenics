@@ -63,7 +63,7 @@ const BrandingSettings = () => {
                     {/* Identity Section */}
                     <section>
                         <h3 style={{ fontSize: 16, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <SettingsIcon size={18} className="text-orange" /> Identidad Básica
+                            <SettingsIcon size={18} className="text-accent" /> Identidad Básica
                         </h3>
                         <div className="form-group">
                             <label>Nombre del Gimnasio / Negocio</label>
@@ -106,7 +106,7 @@ const BrandingSettings = () => {
                     {/* Presets Section */}
                     <section>
                         <h3 style={{ fontSize: 16, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <LayoutPanelTop size={18} className="text-orange" /> Estilos Predeterminados
+                            <LayoutPanelTop size={18} className="text-accent" /> Estilos Predeterminados
                         </h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                             {Object.entries(presets).map(([id, p]) => (
@@ -117,8 +117,8 @@ const BrandingSettings = () => {
                                         padding: 16, 
                                         textAlign: 'center', 
                                         cursor: 'pointer',
-                                        border: localSettings.themeName === id ? '1px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
-                                        background: localSettings.themeName === id ? 'var(--color-accent-orange-glass)' : 'transparent'
+                                        border: localSettings.themeName === id ? '1px solid var(--color-accent)' : '1px solid var(--color-glass-border)',
+                                        background: localSettings.themeName === id ? 'var(--color-accent-glass)' : 'transparent'
                                     }}
                                     onClick={() => {
                                         setLocalSettings({ ...localSettings, ...presets[id], themeName: id });
@@ -140,7 +140,7 @@ const BrandingSettings = () => {
                     {/* Detailed Tools */}
                     <section>
                         <h3 style={{ fontSize: 16, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <Palette size={18} className="text-orange" /> Ajustes de Diseño
+                            <Palette size={18} className="text-accent" /> Ajustes de Diseño
                         </h3>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                             <div className="form-group">
@@ -242,7 +242,7 @@ const BrandingSettings = () => {
 
                     <div style={{ 
                         flex: 1, 
-                        background: '#050505', 
+                        background: 'var(--color-bg-secondary)', 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
@@ -253,11 +253,11 @@ const BrandingSettings = () => {
                         <div style={{ 
                             width: previewMode === 'mobile' ? '280px' : '100%',
                             transition: 'all 0.5s ease',
-                            background: '#000',
+                            background: 'var(--color-bg-main)',
                             borderRadius: localSettings.borderRadius,
                             border: '1px solid var(--color-glass-border)',
                             padding: 24,
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                            boxShadow: localSettings.shadow
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                                 {localSettings.logo ? (
@@ -268,16 +268,16 @@ const BrandingSettings = () => {
                                 <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--color-glass)' }} />
                              </div>
 
-                             <h2 style={{ fontFamily: localSettings.font, fontSize: 24, marginBottom: 8 }}>Bienvenido Atleta</h2>
-                             <p className="text-muted" style={{ fontSize: 12, marginBottom: 24 }}>Tu última sesión fue ayer.</p>
+                             <h2 style={{ fontFamily: localSettings.font, fontSize: 24, marginBottom: 8 }}>Hola de nuevo</h2>
+                             <p className="text-muted" style={{ fontSize: 12, marginBottom: 24 }}>Tu última actividad fue ayer.</p>
 
                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                                 <div className="glass-panel" style={{ height: 80, borderRadius: localSettings.borderRadius, background: `rgba(255,255,255,${localSettings.glassiness})`, border: `1px solid rgba(255,255,255,${localSettings.borderOpacity})` }} />
                                 <div className="glass-panel" style={{ height: 80, borderRadius: localSettings.borderRadius, background: `rgba(255,255,255,${localSettings.glassiness})`, border: `1px solid rgba(255,255,255,${localSettings.borderOpacity})` }} />
                              </div>
 
-                             <button className="btn-primary" style={{ width: '100%', background: localSettings.accentColor, borderRadius: localSettings.borderRadius, border: 'none', padding: '12px', color: '#000', fontWeight: 900 }}>
-                                COMENZAR SESIÓN
+                             <button className="btn-primary" style={{ width: '100%', background: localSettings.accentColor, borderRadius: localSettings.borderRadius, border: 'none', padding: '12px', color: '#000', fontWeight: 700 }}>
+                                ACCIÓN PRINCIPAL
                              </button>
                         </div>
                     </div>

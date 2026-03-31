@@ -186,7 +186,7 @@ app.post('/api/notifications/check-expirations', async (req, res) => {
 
 // ─── INICIO DE SERVIDOR ───────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`🚀 REP Calisthenics Backend v${APP_VERSION} corriendo en puerto ${PORT}`);
+  console.log(`🚀 Gym Backend v${APP_VERSION} corriendo en puerto ${PORT}`);
   const pool = getPool();
   if (pool) {
     try {

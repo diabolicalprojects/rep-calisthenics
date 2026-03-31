@@ -9,22 +9,21 @@ const Splash = ({ onComplete }) => {
     
     const { settings } = useTheme();
     const messages = [
-        "INITIALIZING CORE...",
-        "AUTHENTICATING PROTOCOLS...",
-        "LOADING DATABASE...",
-        `${settings.brandName.toUpperCase()} ONLINE`
+        "BIENVENIDO",
+        "TU EVOLUCIÓN EMPIEZA AQUÍ",
+        "SISTEMA LISTO",
+        `${settings.brandName.toUpperCase()}`
     ];
 
     useEffect(() => {
-        // Ciclo de mensajes cada 500ms
         const messageInterval = setInterval(() => {
             setStep(prev => (prev < messages.length - 1 ? prev + 1 : prev));
-        }, 600);
+        }, 700);
 
         const timer = setTimeout(() => {
             setIsVisible(false);
             setTimeout(onComplete, 800); 
-        }, 3000);
+        }, 3200);
 
         return () => {
             clearTimeout(timer);
@@ -34,25 +33,24 @@ const Splash = ({ onComplete }) => {
 
     return (
         <div className={`splash-container ${!isVisible ? 'fade-out' : ''}`}>
-            {/* Escáner Cyberpunk */}
-            <div className="scanning-line"></div>
+            <div className="splash-background-glow"></div>
             
             <div className="splash-content">
                 <div className="splash-logo-wrapper">
                     <Logo animated={true} className="splash-logo-svg" />
                 </div>
                 
-                <div className="initialization-sequence">
-                    <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{ width: `${((step + 1) / messages.length) * 100}%` }}></div>
-                    </div>
-                    <p className="init-text mono-font">
-                        <span className="cursor-blink">&gt;</span> {messages[step]}
+                <div className="status-sequence">
+                    <p key={step} className="status-text">
+                        {messages[step]}
                     </p>
+                    <div className="loading-dot-bar">
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                    </div>
                 </div>
             </div>
-            
-            <div className="vignette-overlay"></div>
         </div>
     );
 };

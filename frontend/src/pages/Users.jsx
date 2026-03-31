@@ -133,7 +133,7 @@ const Users = () => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td data-label="Usuario" style={{ color: 'var(--color-accent-orange)', fontWeight: 600 }}>@{u.username}</td>
+                                    <td data-label="Usuario" style={{ color: 'var(--color-accent)', fontWeight: 600 }}>@{u.username}</td>
                                     <td data-label="Rol">
                                         <span className={`status-badge ${u.role === 'developer' ? 'success' : u.role === 'admin' ? 'warning' : ''}`} 
                                               style={u.role === 'coach' ? { background: '#222', color: '#999' } : {}}>
@@ -198,11 +198,11 @@ const Users = () => {
 
                         {formData.role === 'coach' && (
                             <div style={{ background: 'rgba(255,115,0,0.05)', padding: 20, borderRadius: 16, border: '1px solid rgba(255,115,0,0.1)' }}>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-accent-orange)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Permisos específicos</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-accent)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Permisos específicos</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                                     {['agenda', 'pos', 'members', 'inventory'].map(perm => (
                                         <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
-                                            <input type="checkbox" checked={!!formData.permissions[perm]} onChange={() => togglePermission(perm)} style={{ width: 18, height: 18, accentColor: 'var(--color-accent-orange)' }} />
+                                            <input type="checkbox" checked={!!formData.permissions[perm]} onChange={() => togglePermission(perm)} style={{ width: 18, height: 18, accentColor: 'var(--color-accent)' }} />
                                             {perm === 'pos' ? 'Cobros (Punto de Venta)' : perm === 'members' ? 'Miembros' : perm.charAt(0).toUpperCase() + perm.slice(1)}
                                         </label>
                                     ))}

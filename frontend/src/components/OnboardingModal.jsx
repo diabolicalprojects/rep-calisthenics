@@ -130,7 +130,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                         {/* Section: Identity */}
                         <div style={{ marginBottom: '32px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                                <div style={{ background: 'var(--color-accent-orange)', padding: '6px', borderRadius: '8px', color: '#000' }}>
+                                <div style={{ background: 'var(--color-accent)', padding: '6px', borderRadius: '8px', color: '#000' }}>
                                     <User size={18} />
                                 </div>
                                 <h3 style={{ fontSize: '16px', margin: 0 }}>Identidad y Contacto</h3>
@@ -171,7 +171,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                         style={{
                                             padding: '14px 18px',
                                             borderRadius: '12px',
-                                            border: (formData.plan === p.name && !formData.isCustomPlan) ? '2px solid var(--color-accent-orange)' : '1px solid var(--color-glass-border)',
+                                            border: (formData.plan === p.name && !formData.isCustomPlan) ? '2px solid var(--color-accent)' : '1px solid var(--color-glass-border)',
                                             background: (formData.plan === p.name && !formData.isCustomPlan) ? 'rgba(244,140,37,0.1)' : 'var(--color-glass)',
                                             cursor: 'pointer',
                                             display: 'flex',
@@ -184,7 +184,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                             <div style={{ fontWeight: 600, fontSize: '14px' }}>{p.name}</div>
                                             <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Membresía estándar</div>
                                         </div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-accent-orange)' }}>${p.price}</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-accent)' }}>${p.price}</div>
                                     </div>
                                 ))}
 
@@ -194,7 +194,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                     style={{
                                         padding: '14px 18px',
                                         borderRadius: '12px',
-                                        border: formData.isCustomPlan ? '2px solid var(--color-accent-orange)' : '1px dashed var(--color-glass-border)',
+                                        border: formData.isCustomPlan ? '2px solid var(--color-accent)' : '1px dashed var(--color-glass-border)',
                                         background: formData.isCustomPlan ? 'rgba(244,140,37,0.1)' : 'transparent',
                                         cursor: 'pointer',
                                     }}
@@ -235,7 +235,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                             padding: '10px',
                                             borderRadius: '8px',
                                             border: '1px solid var(--color-glass-border)',
-                                            background: formData.paymentMethod === m ? 'var(--color-accent-orange)' : 'var(--color-glass)',
+                                            background: formData.paymentMethod === m ? 'var(--color-accent)' : 'var(--color-glass)',
                                             color: formData.paymentMethod === m ? '#000' : 'var(--color-text-main)',
                                             fontSize: '13px',
                                             fontWeight: 600,
@@ -255,7 +255,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                         {/* Section: Dates */}
                         <div style={{ marginBottom: '32px' }}>
                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                                <div style={{ background: 'var(--color-accent-orange)', padding: '6px', borderRadius: '8px', color: '#000' }}>
+                                <div style={{ background: 'var(--color-accent)', padding: '6px', borderRadius: '8px', color: '#000' }}>
                                     <Calendar size={18} />
                                 </div>
                                 <h3 style={{ fontSize: '16px', margin: 0 }}>Fechas de Vigencia</h3>
@@ -315,10 +315,10 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
 
                         {/* Summary & Submit */}
                         <div style={{ 
-                            background: 'var(--color-accent-orange-glass)', 
+                            background: 'var(--color-accent-glass)', 
                             padding: '20px', 
                             borderRadius: '16px', 
-                            border: '1px solid var(--color-accent-orange)',
+                            border: '1px solid var(--color-accent)',
                             marginTop: '32px'
                         }}>
                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -338,7 +338,7 @@ const OnboardingModal = ({ plans, onClose, onSuccess }) => {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '10px',
-                                    background: 'var(--color-accent-orange)',
+                                    background: 'var(--color-accent)',
                                     color: '#000',
                                     border: 'none',
                                     fontWeight: 700
