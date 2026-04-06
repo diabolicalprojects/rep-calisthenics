@@ -14,7 +14,7 @@ import { fmtDate } from '../utils/formatters';
 
 const Agenda = () => {
     const { isAdmin } = useAuth();
-    const { settings } = useTheme();
+    const { settings = {} } = useTheme();
     const [appointments, setAppointments] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showLinkModal, setShowLinkModal] = useState(null);
@@ -76,7 +76,7 @@ const Agenda = () => {
     const updateStatus = async (id, status, apt = null) => {
         if (status === 'Cancelada' && apt?.phone) {
             if (window.confirm("¿Deseas enviar WhatsApp antes de cancelar?")) {
-                const msg = `Hola ${apt.memberName}, sobre tu solicitud en ${settings.brandName}...`;
+                const msg = `Hola ${apt.memberName}, sobre tu solicitud en ${settings?.brandName || 'nuestro establecimiento'}...`;
                 window.open(`https://wa.me/${apt.phone}?text=${encodeURIComponent(msg)}`, '_blank');
             }
         }

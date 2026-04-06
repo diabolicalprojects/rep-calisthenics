@@ -5,10 +5,10 @@ import { useTheme } from '../context/ThemeContext';
 const SUPPORT_PHONE = '5214491245952';
 
 const SupportButton = () => {
-    const { settings } = useTheme();
+    const { settings = {} } = useTheme();
     
     const openSupport = () => {
-        const msg = `Hola! Necesito soporte técnico para el Control Panel de ${settings.brandName}.`;
+        const msg = `Hola! Necesito soporte técnico para el Control Panel de ${settings?.brandName || 'mi cuenta'}.`;
         window.open(`https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
