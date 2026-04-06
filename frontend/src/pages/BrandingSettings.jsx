@@ -10,7 +10,17 @@ import HelpTooltip from '../components/HelpTooltip';
 
 const BrandingSettings = () => {
     const { settings, updateSettings, applyPreset, presets } = useTheme();
-    const [localSettings, setLocalSettings] = useState(settings);
+    const [localSettings, setLocalSettings] = useState(settings || {
+        accentColor: '#f48c25',
+        borderRadius: '12px',
+        font: "'Lexend', sans-serif",
+        logo: null,
+        brandName: 'Gym Manager',
+        glassiness: '0.03',
+        borderOpacity: '0.08',
+        shadow: '0 10px 15px rgba(0, 0, 0, 0.5)',
+        themeName: 'modern'
+    });
     const [previewMode, setPreviewMode] = useState('desktop');
 
     const handleSave = () => {
@@ -263,7 +273,7 @@ const BrandingSettings = () => {
                                 {localSettings.logo ? (
                                     <img src={localSettings.logo} alt="Mock Logo" style={{ height: 24 }} />
                                 ) : (
-                                    <span style={{ fontWeight: 900, fontSize: 18, color: localSettings.accentColor }}>{localSettings.brandName.toUpperCase()}</span>
+                                    <span style={{ fontWeight: 900, fontSize: 18, color: localSettings?.accentColor || 'var(--color-accent)' }}>{(localSettings?.brandName || 'SISTEMA').toUpperCase()}</span>
                                 )}
                                 <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--color-glass)' }} />
                              </div>

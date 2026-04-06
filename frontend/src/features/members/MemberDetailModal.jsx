@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import BaseModal from '../../components/BaseModal';
 import { fmtDate, daysSince } from '../../utils/formatters';
+import { useTheme } from '../../context/ThemeContext';
 
 const MemberDetailModal = ({ member, isOpen, onClose, onUpdate, onDelete }) => {
     const { settings } = useTheme();
@@ -20,7 +21,7 @@ const MemberDetailModal = ({ member, isOpen, onClose, onUpdate, onDelete }) => {
 
     const handleWhatsApp = () => {
         const cleanPhone = member.phone?.replace(/\D/g, '');
-        const msg = `Hola ${member.name}, te contactamos desde ${settings.brandName} para...`;
+        const msg = `Hola ${member.name}, te contactamos desde ${settings?.brandName || 'nuestro gimnasio'} para...`;
         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 

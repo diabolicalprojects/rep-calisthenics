@@ -8,12 +8,12 @@ const Splash = ({ onComplete }) => {
     const [step, setStep] = useState(0);
     
     const { settings } = useTheme();
-    const messages = [
+    const messages = React.useMemo(() => [
         "BIENVENIDO",
         "TU EVOLUCIÓN EMPIEZA AQUÍ",
         "SISTEMA LISTO",
-        `${settings.brandName.toUpperCase()}`
-    ];
+        `${(settings?.brandName || 'SISTEMA').toUpperCase()}`
+    ], [settings]);
 
     useEffect(() => {
         const messageInterval = setInterval(() => {

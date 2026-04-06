@@ -3,9 +3,11 @@ import Logo from '../components/Logo';
 import { LogIn, AlertCircle, ShieldCheck, Lock, User as UserIcon } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Login = () => {
     const { login } = useAuth();
+    const { settings } = useTheme();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -87,7 +89,7 @@ const Login = () => {
                             type="submit"
                             className="cyber-btn-primary"
                             disabled={loading}
-                            style={{ borderRadius: settings.borderRadius }}
+                            style={{ borderRadius: settings?.borderRadius || '12px' }}
                         >
                             {loading ? (
                                 <span className="loading-dots">AUTENTICANDO</span>
@@ -102,7 +104,7 @@ const Login = () => {
                     <footer className="login-footer-minimal">
                         <div className="footer-line"></div>
                         <p className="v-tag">VERSION PROTOCOL 1.1.2</p>
-                        <p className="copy-tag">© {new Date().getFullYear()} {settings.brandName.toUpperCase()}</p>
+                        <p className="copy-tag">© {new Date().getFullYear()} {(settings?.brandName || 'REP CONTROL').toUpperCase()}</p>
                     </footer>
                 </div>
             </main>

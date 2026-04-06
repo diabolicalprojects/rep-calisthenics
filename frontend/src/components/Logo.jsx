@@ -7,23 +7,23 @@ const Logo = ({ animated = true, style = {}, className = '' }) => {
 
     return (
         <div className={`logo-wrapper ${animated ? 'animated' : ''} ${className}`} style={{ ...style, display: 'flex', alignItems: 'center' }}>
-            {settings.logo ? (
+            {settings?.logo ? (
                 <img
                     src={settings.logo}
-                    alt={`${settings.brandName} Logo`}
+                    alt={`${settings.brandName || 'Gym'} Logo`}
                     className="gym-logo"
                     style={{ maxHeight: '100%', width: 'auto' }}
                 />
             ) : (
                 <span style={{ 
-                    fontFamily: settings.font, 
+                    fontFamily: settings?.font || "'Lexend', sans-serif", 
                     fontWeight: 900, 
                     fontSize: '22px', 
                     letterSpacing: '1px',
                     color: 'var(--color-accent)',
                     whiteSpace: 'nowrap'
                 }}>
-                    {settings.brandName.toUpperCase()}
+                    {(settings?.brandName || 'REP CONTROL').toUpperCase()}
                 </span>
             )}
         </div>

@@ -71,9 +71,9 @@ const Retention = () => {
         if (phone.length === 10) phone = '521' + phone;
 
         const msgs = {
-            Reactivación: `¡Hola ${member.name}! 💪 Te extrañamos en ${settings.brandName}. Tenemos una oferta especial para que vuelvas. 🔥`,
-            Incentivo: `¡Hola ${member.name}! 👋 Notamos tu ausencia en ${settings.brandName}. ¡Te regalamos una clase de cortesía para tu regreso! 🔋`,
-            Default: `¡Hola ${member.name}! 👋 Queremos saber cómo vas con tus entrenamientos en ${settings.brandName}. ⚡`
+            Reactivación: `¡Hola ${member.name}! 💪 Te extrañamos en ${settings?.brandName || 'nuestro gimnasio'}. Tenemos una oferta especial para que vuelvas. 🔥`,
+            Incentivo: `¡Hola ${member.name}! 👋 Notamos tu ausencia en ${settings?.brandName || 'nuestro gimnasio'}. ¡Te regalamos una clase de cortesía para tu regreso! 🔋`,
+            Default: `¡Hola ${member.name}! 👋 Queremos saber cómo vas con tus entrenamientos en ${settings?.brandName || 'nuestro gimnasio'}. ⚡`
         };
 
         const msg = msgs[type] || msgs.Default;

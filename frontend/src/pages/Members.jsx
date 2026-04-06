@@ -74,7 +74,7 @@ const Members = () => {
             <header className="page-header stagger-1 flex-responsive">
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <h1 className="page-title">Gestión de {settings.brandName}</h1>
+                        <h1 className="page-title">Gestión de {settings?.brandName || 'Gimnasio'}</h1>
                         <HelpTooltip
                             title="Miembros"
                             content="CRM centralizado. Gestiona suscripciones, historial y perfiles en un solo lugar."

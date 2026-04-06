@@ -441,7 +441,7 @@ const POS = () => {
                                 {Array(20).fill(0).map((_, i) => <div key={i} style={{ width: 10, height: 10, background: 'var(--color-bg-secondary)', borderRadius: '50%', marginTop: -5 }} />)}
                             </div>
 
-                            <div style={{ textAlign: 'center', fontWeight: '900', fontSize: 16, marginBottom: 8, letterSpacing: 2 }}>{settings.brandName.toUpperCase()}</div>
+                            <div style={{ textAlign: 'center', fontWeight: '900', fontSize: 16, marginBottom: 8, letterSpacing: 2 }}>{(settings?.brandName || 'SISTEMA').toUpperCase()}</div>
                             <div style={{ textAlign: 'center', fontSize: 10, marginBottom: 20, color: '#666' }}>SISTEMA DE GESTIÓN INTELIGENTE</div>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}><span>ORDEN:</span> <span>#{showReceipt.id?.toUpperCase()}</span></div>
@@ -469,7 +469,7 @@ const POS = () => {
 
                             <div style={{ textAlign: 'center', marginTop: 32, fontSize: 10, fontWeight: '700', color: '#888' }}>
                                 *** GRACIAS POR TU CONFIANZA ***<br/>
-                                #{settings.brandName.toUpperCase().replace(/\s+/g, '')}
+                                #{(settings?.brandName || 'Gym').toUpperCase().replace(/\s+/g, '')}
                             </div>
                         </div>
 
